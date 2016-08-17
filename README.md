@@ -31,3 +31,4 @@ installer.py update
 installer.py remove
 
 ## License
+A3S Repository Updater is licensed under the [MIT license](LICENSE).
