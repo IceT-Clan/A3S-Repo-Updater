@@ -18,9 +18,13 @@ installer.py
 
 ## Usage
 a3s-repo-updater.py add
+
 a3s-repo-updater.py remove
+
 a3s-repo-updater.py update
+
 a3s-repo-updater.py settings
+
 installer.py update
 
 ## Uninstallation
