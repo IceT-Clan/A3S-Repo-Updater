@@ -14,18 +14,18 @@ This is a Updater for Arma3Sync Repositorys. It allows many different sources to
  * JSRS4 Apex
 
 ## Requirements
-* steamcmd
-* python3
+* [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD#Downloading_SteamCMD)
+* [python3](https://www.python.org/downloads/)
 
 ## Installation
 ``git clone https://github.com/IceT-Clan/A3S-Repo-Updater.git``
 
 ## Usage
-a3s.py --add
+``a3s.py --add``
 
-a3s.py --remove
+``a3s.py --remove``
 
-a3s.py --update
+``a3s.py --update``
 
 ## License
 A3S Repository Updater is licensed under the [MIT license](LICENSE).
