@@ -7,9 +7,11 @@ import os
 import shutil
 import sys
 import zipfile
+import subprocess
 
 from git import Repo
 from requests import get
+from getpass import getpass
 
 
 class bcolors:
@@ -41,9 +43,15 @@ def printstatus(state, displayname):
     elif state == 2:
         sys.stdout.write("\r[ " + bcolors.OKGREEN + "OK" + bcolors.ENDC +
                          " ] " + displayname + " successfully updated\n")
+    elif state == 3:
+        sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolors.ENDC +
+                         " ] " + displayname + " has been added to the Steam Bag\n")
 
 
 def main():
+    workshop_items = list()
+    workshop_name = list()
+
     # Command line argument setup
     parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
     parser.add_argument("-a", "--add", action="store_true",
@@ -54,6 +62,11 @@ def main():
                         help="Update repository")
 
     args = parser.parse_args()
+
+    if not len(sys.argv) > 1:
+        parser.print_help()
+        sys.stdout.write("E: No Arguments")
+        sys.exit(2)
 
     # Read existing config
     modlist = list()
@@ -70,8 +83,12 @@ def main():
         if mod[0] == "repolocation":
             moddir = mod[1]
             continue
-
+        if mod[0] == "steam":
+            steamcmd = mod[1]
+            steamdownload = mod[2]
+            continue
         if args.update:
+            # Github Release
             if mod[0] == "github-release":
                 displayname = mod[1]
                 github_loc = mod[2]
@@ -115,6 +132,7 @@ def main():
                     sys.stdout.write(line)
 
                 printstatus(2, displayname)
+            # Github
             if mod[0] == "github":
                 displayname = mod[1]
                 github_loc = mod[2]
@@ -138,8 +156,29 @@ def main():
                         shutil.move(f, moddir + "/" + displayname)
 
                 printstatus(2, displayname)
+            # Steam Workshop
+            if mod[0] == "workshop":
+                workshop_name.append(mod[1])
+                workshop_items.append(mod[2])
+                printstatus(3, displayname)
+    
+    # Steam Workshop
+    with open("steambag.tmp", "wb") as f:
+        login = input("Login: ")
+        passwd = getpass.getpass()
+        steamguard = input("Steam Guard Code: ")
+        f.write("login " + login + " " + passwd + " " + steamguard)
+        for id in workshop_items:
+            f.write("workshop_download_item 107410 " + id)
+        f.write("quit")
+    subprocess.run(["bash " + steamcmd, "+runscript steambag.tmp"], stdout=subprocess.PIPE)
+    os.remove("steambag.tmp")
+    for i in range(len(workshop_items)):
+        shutil.move(steamdownload + "/" + workshop_items[i], moddir + "/" + workshop_name[i]
+        printstatus(2, workshop_name[i])
 
     return
+
 
 if __name__ == "__main__":
     main()
