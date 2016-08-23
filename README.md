@@ -1,5 +1,5 @@
 # Arma3Sync Repository Updater
---description--
+This is a Updater for Arma3Sync Repositorys. It allows many different sources to be updated.
 
 ## Features
 * Mods on Steam Workshop
@@ -13,8 +13,12 @@
  * ACRE2
  * JSRS4 Apex
 
+## Requirements
+* steamcmd
+* python3
+
 ## Installation
-  git clone https://github.com/IceT-Clan/A3S-Repo-Updater.git
+``git clone https://github.com/IceT-Clan/A3S-Repo-Updater.git``
 
 ## Usage
 a3s.py --add
