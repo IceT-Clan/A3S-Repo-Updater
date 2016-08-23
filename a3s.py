@@ -26,7 +26,6 @@ class bcolors:
 
 
 def download(url, file_name):
-    print("Downloading " + url + "...")
     with open(file_name, "wb") as f:
         response = get(url)
         f.write(response.content)
