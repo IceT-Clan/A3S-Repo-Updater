@@ -12,11 +12,35 @@ from git import Repo
 from requests import get
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def download(url, file_name):
     print("Downloading " + url + "...")
     with open(file_name, "wb") as f:
         response = get(url)
         f.write(response.content)
+
+
+def printstatus(state, displayname):
+    if state == 0:
+        # Updating
+        sys.stdout.write("\r[" + bcolors.WARNING + "WAIT" + bcolors.ENDC +
+                         "] Updating " + displayname + "...")
+    elif state == 1:
+        sys.stdout.write("\r[ " + bcolors.OKGREEN + "OK" + bcolors.ENDC +
+                         " ] " + displayname + " is up to date\n")
+    elif state == 2:
+        sys.stdout.write("\r[ " + bcolors.OKGREEN + "OK" + bcolors.ENDC +
+                         " ] " + displayname + " successfully updated\n")
 
 
 def main():
@@ -53,7 +77,7 @@ def main():
                 github_loc = mod[2]
                 file_format = mod[3]
                 cur_version = mod[4]
-                sys.stdout.write("\r[WAIT] Updating " + displayname + "...")
+                printstatus(0, displayname)
                 if os.path.isdir(displayname):
                     modrepo = git.Repo(displayname)
                     modrepo.remotes.origin.pull()
@@ -69,8 +93,7 @@ def main():
                     new_version = new_tag[1:]
                 if new_tag == cur_version:
                     # No update needed
-                    sys.stdout.write("\r[ OK ] " + displayname +
-                                     " is up to date\n")
+                    printstatus(1, displayname)
                     continue
 
                 # Download newest version
@@ -91,12 +114,11 @@ def main():
                         line = line.replace(old_line, new_line)
                     sys.stdout.write(line)
 
-                sys.stdout.write("\r[ OK ] Successfully updated "
-                                 + displayname + "\n")
+                printstatus(2, displayname)
             if mod[0] == "github":
                 displayname = mod[1]
                 github_loc = mod[2]
-                sys.stdout.write("\r[WAIT] Updating " + displayname + "...")
+                printstatus(0, displayname)
                 if os.path.isdir(displayname):
                     modrepo = git.Repo(displayname)
                     count = sum(1 for c in
@@ -106,8 +128,7 @@ def main():
                         modrepo.remotes.origin.pull()
                     else:
                         # No update needed
-                        sys.stdout.write("\r[ OK ] " + displayname +
-                                         " is up to date\n")
+                        printstatus(1, displayname)
                         continue
                 else:
                     modrepo = Repo.clone_from("https://github.com/"
@@ -116,8 +137,7 @@ def main():
                     for f in glob.glob(displayname + r"/@*"):
                         shutil.move(f, moddir + "/" + displayname)
 
-                sys.stdout.write("\r[ OK ] Successfully updated "
-                                 + displayname + "\n")
+                printstatus(2, displayname)
 
     return
 
