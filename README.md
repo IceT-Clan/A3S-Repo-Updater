@@ -23,7 +23,7 @@ This is a Updater for Arma3Sync Repositorys. It allows many different sources to
 ## Usage
 ``a3s.py --add``
 
-``a3s.py --remove``
+``a3s.py --remove``
 
 ``a3s.py --update``
 
