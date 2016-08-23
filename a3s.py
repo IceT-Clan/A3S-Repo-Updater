@@ -61,23 +61,27 @@ def main():
                                               displayname)
 
                 # Check if an update is available
-                new_version = str(modrepo.tags[-1])
-                if new_version == cur_version:
+                new_tag = str(modrepo.tags[-1])
+                new_version = new_tag
+                if new_tag.startswith("v"):
+                    new_version = new_tag[1:]
+                if new_tag == cur_version:
                     # No update needed
                     continue
 
                 # Download newest version
-                zipname = file_format.replace("$tags", new_version)
+                zipname = file_format.replace("$version", new_version)
                 savedfile = displayname + ".zip"
-                download("https://github.com/" + mod[2] + "/releases/download/"
-                         + new_version + "/" + zipname, savedfile)
+                download("https://github.com/" + github_loc +
+                         "/releases/download/" + new_tag + "/" + zipname,
+                         savedfile)
                 with zipfile.ZipFile(savedfile, "r") as z:
                     z.extractall(moddir)
                 os.remove(savedfile)  # Remove .zip file
 
                 # Write new version to config
                 old_line = ",".join([str(x) for x in mod])
-                new_line = old_line.replace(cur_version, new_version)
+                new_line = old_line.replace(cur_version, new_tag)
                 for line in fileinput.input("repo.cfg", inplace=1):
                     if old_line in line:
                         line = line.replace(old_line, new_line)
