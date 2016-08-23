@@ -2,7 +2,9 @@
 import argparse
 import fileinput
 import git
+import glob
 import os
+import shutil
 import sys
 import zipfile
 
@@ -51,7 +53,7 @@ def main():
                 github_loc = mod[2]
                 file_format = mod[3]
                 cur_version = mod[4]
-                print("Updating " + displayname + "...")
+                sys.stdout.write("\r[WAIT] Updating " + displayname + "...")
                 if os.path.isdir(displayname):
                     modrepo = git.Repo(displayname)
                     modrepo.remotes.origin.pull()
@@ -67,6 +69,8 @@ def main():
                     new_version = new_tag[1:]
                 if new_tag == cur_version:
                     # No update needed
+                    sys.stdout.write("\r[ OK ] " + displayname +
+                                     " is up to date\n")
                     continue
 
                 # Download newest version
@@ -86,6 +90,34 @@ def main():
                     if old_line in line:
                         line = line.replace(old_line, new_line)
                     sys.stdout.write(line)
+
+                sys.stdout.write("\r[ OK ] Successfully updated "
+                                 + displayname + "\n")
+            if mod[0] == "github":
+                displayname = mod[1]
+                github_loc = mod[2]
+                sys.stdout.write("\r[WAIT] Updating " + displayname + "...")
+                if os.path.isdir(displayname):
+                    modrepo = git.Repo(displayname)
+                    count = sum(1 for c in
+                                modrepo.iter_commits('master..origin/master'))
+                    if count != 0:
+                        # Pull newest version from remote
+                        modrepo.remotes.origin.pull()
+                    else:
+                        # No update needed
+                        sys.stdout.write("\r[ OK ] " + displayname +
+                                         " is up to date\n")
+                        continue
+                else:
+                    modrepo = Repo.clone_from("https://github.com/"
+                                              + github_loc + ".git",
+                                              displayname)
+                    for f in glob.glob(displayname + r"/@*"):
+                        shutil.move(f, moddir + "/" + displayname)
+
+                sys.stdout.write("\r[ OK ] Successfully updated "
+                                 + displayname + "\n")
 
     return
 
