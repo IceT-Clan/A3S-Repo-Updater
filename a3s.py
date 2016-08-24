@@ -44,7 +44,8 @@ def printstatus(state, displayname):
                          " ] " + displayname + " successfully updated\n")
     elif state == 3:
         sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolors.ENDC +
-                         " ] " + displayname + " has been added to the Steam Bag\n")
+                         " ] " + displayname +
+                         " has been added to the Steam Bag\n")
 
 
 def main():
@@ -64,7 +65,6 @@ def main():
 
     if not len(sys.argv) > 1:
         parser.print_help()
-        sys.stdout.write("E: No Arguments")
         sys.exit(2)
 
     # Read existing config
@@ -160,7 +160,7 @@ def main():
                 workshop_name.append(mod[1])
                 workshop_items.append(mod[2])
                 printstatus(3, displayname)
-    
+
     # Steam Workshop
     with open("steambag.tmp", "wb") as f:
         login = input("Login: ")
@@ -170,10 +170,12 @@ def main():
         for id in workshop_items:
             f.write("workshop_download_item 107410 " + id)
         f.write("quit")
-    subprocess.run(["bash " + steamcmd, "+runscript steambag.tmp"], stdout=subprocess.PIPE)
+    subprocess.run(["bash " + steamcmd, "+runscript steambag.tmp"],
+                   stdout=subprocess.PIPE)
     os.remove("steambag.tmp")
     for i in range(len(workshop_items)):
-        shutil.move(steamdownload + "/" + workshop_items[i], moddir + "/" + workshop_name[i]
+        shutil.move(steamdownload + "/" + workshop_items[i], moddir + "/"
+                    + workshop_name[i])
         printstatus(2, workshop_name[i])
 
     return
