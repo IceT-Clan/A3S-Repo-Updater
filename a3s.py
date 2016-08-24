@@ -46,11 +46,16 @@ def printstatus(state, displayname):
         sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolors.ENDC +
                          " ] " + displayname +
                          " has been added to the Steam Bag\n")
+    elif state == 4:
+        sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolor.ENDC +
+                         " ] " + displayname + 
+                         " will be added to @ace_optinals"\n")
 
 
 def main():
     workshop_ids = list()
     workshop_names = list()
+    ace_optional_files = list()
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
@@ -155,6 +160,10 @@ def main():
                         shutil.move(f, moddir + "/" + displayname)
 
                 printstatus(2, displayname)
+            # ace_optionals
+            if mod[0] == "ace_optinals"
+                ace_optional_files.append(mod[1])
+                printstatus(4, mod[1])
             # Steam Workshop
             if mod[0] == "workshop":
                 workshop_names.append(mod[1])
@@ -177,6 +186,14 @@ def main():
         shutil.move(steamdownload + "/" + workshop_ids[i],
                     moddir + "/" + workshop_names[i])
         printstatus(2, workshop_name[i])
+    printstatus(2, "Steam Workshop")
+    
+    # ace_optinals
+    os.makedirs(moddir + "/@ace_optionals/addons", exist_ok=True)
+    for mod in ace_optional_files:
+        for file in glob.glob(moddir + "@ace/optionals/" + mod + r".pbo*")
+            shutil.copy(moddir + "@ace/optionals/" + file)
+    printstatus(2, "@ace_optionals")
 
     return
 
