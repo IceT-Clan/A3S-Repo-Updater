@@ -49,8 +49,8 @@ def printstatus(state, displayname):
 
 
 def main():
-    workshop_items = list()
-    workshop_name = list()
+    workshop_ids = list()
+    workshop_names = list()
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
@@ -157,8 +157,8 @@ def main():
                 printstatus(2, displayname)
             # Steam Workshop
             if mod[0] == "workshop":
-                workshop_name.append(mod[1])
-                workshop_items.append(mod[2])
+                workshop_names.append(mod[1])
+                workshop_ids.append(mod[2])
                 printstatus(3, displayname)
 
     # Steam Workshop
@@ -167,15 +167,15 @@ def main():
         passwd = getpass.getpass()
         steamguard = input("Steam Guard Code: ")
         f.write("login " + login + " " + passwd + " " + steamguard)
-        for id in workshop_items:
+        for id in workshop_ids:
             f.write("workshop_download_item 107410 " + id)
         f.write("quit")
     subprocess.run(["bash " + steamcmd, "+runscript steambag.tmp"],
                    stdout=subprocess.PIPE)
     os.remove("steambag.tmp")
-    for i in range(len(workshop_items)):
-        shutil.move(steamdownload + "/" + workshop_items[i],
-                    moddir + "/" + workshop_name[i])
+    for i in range(len(workshop_ids)):
+        shutil.move(steamdownload + "/" + workshop_ids[i],
+                    moddir + "/" + workshop_names[i])
         printstatus(2, workshop_name[i])
 
     return
