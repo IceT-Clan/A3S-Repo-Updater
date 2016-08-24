@@ -174,8 +174,8 @@ def main():
                    stdout=subprocess.PIPE)
     os.remove("steambag.tmp")
     for i in range(len(workshop_items)):
-        shutil.move(steamdownload + "/" + workshop_items[i], moddir + "/"
-                    + workshop_name[i])
+        shutil.move(steamdownload + "/" + workshop_items[i],
+                    moddir + "/" + workshop_name[i])
         printstatus(2, workshop_name[i])
 
     return
