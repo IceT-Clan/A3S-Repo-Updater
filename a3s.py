@@ -138,6 +138,12 @@ def printstatus(state, displayname="NO DISPLAY NAME"):
         sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
                          " ] " + displayname  + " does not exist"
                          + "\n")
+    elif state == -3:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" +
+                         VT100_FORMATS.RESET + " ] " +
+                         "Maybe SteamCMD did not download " + displayname +
+                         " correctly? " +
+                         "(use --steam-only to skip other sources)" + "\n")
 
 def debug(msg):
     if is_debug:
@@ -171,6 +177,10 @@ def main():
                         help="set security level")
     parser.add_argument("--ignore-version", action="store_true",
                         help="ignore version checking", dest="skip_version")
+    parser.add_argument("--steam-only", action="store_true",
+                        help="update only Steam Workshop Mods", dest="workshop_only")
+    parser.add_argument("--reset-steam", action="store_true",
+                        help="reset Steam to redownload all files", dest="workshop_reset")
 
     args = parser.parse_args()
 
@@ -208,7 +218,7 @@ def main():
             continue
         if args.update:
             # Github Release
-            if mod[0] == "github-release":
+            if mod[0] == "github-release" and not args.workshop_only:
                 displayname = mod[1]
                 github_loc = mod[2]
                 file_format = mod[3]
@@ -273,7 +283,7 @@ def main():
 
                 printstatus(2, displayname)
             # Github
-            if mod[0] == "github":
+            if mod[0] == "github" and not args.workshop_only:
                 displayname = mod[1]
                 github_loc = mod[2]
                 printstatus(0, displayname)
@@ -309,6 +319,9 @@ def main():
         # loop done
     # loop complete
     # Steam Workshop
+    if args.workshop_reset:
+        os.remove("/home/arma3/steamcmd/steamapps/workshop/appworkshop_107410.acf")
+
     if args.update:
         with open("/tmp/steambag.tmp", "wb") as steambag:
             printstatus(5)
@@ -325,6 +338,8 @@ def main():
                 print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
 
             steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
+            steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
+            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n", 'UTF-8'))
             # steambag.write(bytes("app_update \"233780\" validate\n", 'UTF-8')) # hopefully not needed
             for workshop_id in workshop_ids:
                 steambag.write(bytes("workshop_download_item 107410 " +
@@ -355,7 +370,7 @@ def main():
         for i in range(len(workshop_ids)):
             if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
                 printstatus(-2, workshop_names[i])
-                sys.stdout.write("\b Maybe Steam didn't donwload " + workshop_ids[i] + " correctrly?\n")
+                printstatus(-3, workshop_ids[i])
                 continue
             if os.path.islink(moddir + "/@" + workshop_names[i]):
                 printstatus(6, moddir + "/@" + workshop_names[i])
