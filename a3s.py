@@ -8,48 +8,141 @@ import shutil
 import sys
 import zipfile
 import subprocess
+import getpass
 
 from git import Repo
 from requests import get
-from getpass import getpass
 
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+class VT100_FORMATS:
+    """http://misc.flogisoft.com/bash/tip_colors_and_formatting
+        ANSI/VT100 colors and formats"""
+
+    # formatting
     BOLD = '\033[1m'
+    DIM = '\033[2m'
+    STANDOUT = '\033[3m'
     UNDERLINE = '\033[4m'
+    BLINK = '\033[5m'
+    FORMAT_6 = '\033[6m'
+    REVERSE = '\033[7m'
+    HIDDEN = '\033[8m'
+
+    RESET = '\033[m'
+    
+    BOLD_OFF = '\033[21m'
+    DIM_OFF = '\033[22m'
+    STANDOUT_OFF = '\033[23m'
+    UNDERLINE_OFF = '\033[24m'
+    BLINK_OFF = '\033[25m'
+    FORMAT_6_OFF = '\033[26m'
+    REVERSE_OFF = '\033[27m'
+    HIDDEN_OFF = '\033[28m'
+
+    # 8 foreground colors
+    F_COLOR_OFF = '\033[39m'
+    F_BLACK = '\033[30m'
+    F_RED = '\033[31m'
+    F_GREEN = '\033[32m'
+    F_YELLOW = '\033[33m'
+    F_BLUE = '\033[34m'
+    F_MAGENTA = '\033[35m'
+    F_CYAN = '\033[36m'
+
+    F_L_GRAY = '\033[37m'
+    F_GRAY = '\033[90m'
+
+    F_L_RED = '\033[91m'
+    F_L_GREEN = '\033[92m'
+    F_L_YELLOW = '\033[93m'
+    F_L_BLUE = '\033[94m'
+    F_L_MAGENTA = '\033[95m'
+    F_L_CYAN = '\033[96m'
+
+    F_WHITE = '\033[97m'
+
+    # 8 background colors
+    B_COLOR_OFF = '\033[49m'
+    B_BLACK = '\033[40m'
+    B_RED = '\033[41m'
+    B_GREEN = '\033[42m'
+    B_YELLOW = '\033[43m'
+    B_BLUE = '\033[44m'
+    B_MAGENTA = '\033[45m'
+    B_CYAN = '\033[46m'
+
+    B_L_GRAY = '\033[47m'
+    B_GRAY = '\033[100m'
+
+    B_L_RED = '\033[101m'
+    B_L_GREEN = '\033[102m'
+    B_L_YELLOW = '\033[103m'
+    B_L_BLUE = '\033[104m'
+    B_L_MAGENTA = '\033[105m'
+    B_L_CYAN = '\033[106m'
+
+    B_WHITE = '\033[107m'
+
+    # 256 forground colors
+    def f_color(color_number):
+        return '\033[38;5;' + color_number + 'm'
+
+    # 256 background colors
+    def b_color(color_number):
+        return '\033[48;5;' + color_number + 'm'
 
 
 def download(url, file_name):
-    with open(file_name, "wb") as f:
+    debug("download " + url + " as " + file_name)
+    with open(file_name, "wb") as download_file:
         response = get(url)
-        f.write(response.content)
+        download_file.write(response.content)
 
 
-def printstatus(state, displayname):
+def printstatus(state, displayname="NO DISPLAY NAME"):
     if state == 0:
         # Updating
-        sys.stdout.write("\r[" + bcolors.WARNING + "WAIT" + bcolors.ENDC +
-                         "] Updating " + displayname + "...")
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_YELLOW + "WAIT" + VT100_FORMATS.RESET +
+                         " ] " + "Updating " + displayname + "...")
     elif state == 1:
-        sys.stdout.write("\r[ " + bcolors.OKGREEN + "OK" + bcolors.ENDC +
-                         " ] " + displayname + " is up to date\n")
+        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_GREEN + "OK" + VT100_FORMATS.RESET +
+                         "  ] " + displayname + " is up to date"
+                         + "\n")
     elif state == 2:
-        sys.stdout.write("\r[ " + bcolors.OKGREEN + "OK" + bcolors.ENDC +
-                         " ] " + displayname + " successfully updated\n")
+        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_GREEN + "OK" + VT100_FORMATS.RESET +
+                         "  ] " + displayname + " successfully updated"
+                         + "\n")
     elif state == 3:
-        sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolors.ENDC +
-                         " ] " + displayname +
-                         " has been added to the Steam Bag\n")
+        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_BLUE + "OK" + VT100_FORMATS.RESET +
+                         "  ] " + displayname +
+                         " has been added to the Steam Bag"
+                         + "\n")
     elif state == 4:
-        sys.stdout.write("\r[ " + bcolors.OKBLUE + "OK" + bcolor.ENDC +
-                         " ] " + displayname + 
-                         " will be added to @ace_optinals"\n")
+        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_BLUE + "OK" + VT100_FORMATS.RESET +
+                         "  ] " + displayname +
+                         " will be added to @ace_optinals"
+                         + "\n")
+    elif state == 5:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_YELLOW + "WAIT" + VT100_FORMATS.RESET +
+                         " ] " + "doing Steam Workshop"
+                         + "\n")
+    elif state == 6:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_BLUE + "SKIP" + VT100_FORMATS.RESET +
+                         " ] " + displayname + " is already linked"
+                         + "\n")
+    elif state == -1:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
+                         " ] " + displayname  + " is not a valid ZIP-Archive"
+                         + "\n")
+    elif state == -2:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
+                         " ] " + displayname  + " does not exist"
+                         + "\n")
+
+def debug(msg):
+    if is_debug:
+        sys.stdout.write("\r" + "[" + VT100_FORMATS.BOLD + "DEBUG" + VT100_FORMATS.RESET +
+                         "] " + msg + "\n")
 
 
 def main():
@@ -59,12 +152,25 @@ def main():
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
-    parser.add_argument("-a", "--add", action="store_true",
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    parser.add_argument("-v", "--version",
+                        action="version", version='%(prog)s 0.2.0')
+    parser.add_argument("-d", "--debug",
+                        help="enable debug",
+                        action="store_true")
+
+    group.add_argument("-a", "--add", action="store_true",
                         help="Add mod to repository")
-    parser.add_argument("-r", "--remove", action="store_true",
+    group.add_argument("-r", "--remove", action="store_true",
                         help="Remove mod from repository")
-    parser.add_argument("-u", "--update", action="store_true",
+    group.add_argument("-u", "--update", action="store_true",
                         help="Update repository")
+
+    parser.add_argument("--security", type=int, default=1,
+                        help="set security level")
+    parser.add_argument("--ignore-version", action="store_true",
+                        help="ignore version checking", dest="skip_version")
 
     args = parser.parse_args()
 
@@ -72,14 +178,23 @@ def main():
         parser.print_help()
         sys.exit(2)
 
+    global is_debug
+    is_debug = args.debug
+    debug("enabled")
+
+    if args.security > 2:
+        args.security = 2
+
+    if is_debug:
+        print(args)
+
     # Read existing config
     modlist = list()
     with open("repo.cfg", "r") as conf:
         for line in conf:
             if line.startswith("#"):
                 continue
-            mod = line.strip("\n").split(",")
-            modlist.append(mod)
+            modlist.append(line.strip("\n").split(","))
 
     # Locate saving directory for installed mods
     moddir = os.getcwd()
@@ -87,7 +202,7 @@ def main():
         if mod[0] == "repolocation":
             moddir = mod[1]
             continue
-        if mod[0] == "steam":
+        if mod[0] == "steamcmd":
             steamcmd = mod[1]
             steamdownload = mod[2]
             continue
@@ -112,19 +227,40 @@ def main():
                 new_version = new_tag
                 if new_tag.startswith("v"):
                     new_version = new_tag[1:]
-                if new_tag == cur_version:
+                if new_tag == cur_version and not args.skip_version:
                     # No update needed
                     printstatus(1, displayname)
                     continue
 
+                # Remove old Mod
+                if os.path.isdir(os.path.join(moddir, "@" + displayname)):
+                    shutil.rmtree(os.path.join(moddir, "@" + displayname))
+
                 # Download newest version
                 zipname = file_format.replace("$version", new_version)
                 savedfile = displayname + ".zip"
+                debug("zipname: " + zipname + "; savedfile: " + savedfile)
+                """if args.debug: debug("download https://github.com/"
+                                     + github_loc +
+                                     "/releases/download/" + new_tag + "/"
+                                     + zipname + " as " + savedfile)"""
                 download("https://github.com/" + github_loc +
-                         "/releases/download/" + new_tag + "/" + zipname,
+                         "/archive/" + new_tag + "/" + zipname,
                          savedfile)
-                with zipfile.ZipFile(savedfile, "r") as z:
-                    z.extractall(moddir)
+
+                if not zipfile.is_zipfile(savedfile):
+                    printstatus(-1, displayname)
+                    continue
+                dir = str()
+                with zipfile.ZipFile(savedfile, "r") as packed:
+                    for zipinfo in packed.namelist():
+                        dir = packed.extract(zipinfo, moddir)
+                    #dir = packed.extractall(moddir)
+                dir = dir.split('/')[1]
+                debug("rename " + os.path.join(moddir, dir) + " to " +
+                      os.path.join(moddir, "@" + displayname))
+                os.rename(os.path.join(moddir, dir),
+                          os.path.join(moddir, "@" + displayname))
                 os.remove(savedfile)  # Remove .zip file
 
                 # Write new version to config
@@ -148,7 +284,7 @@ def main():
                     if count != 0:
                         # Pull newest version from remote
                         modrepo.remotes.origin.pull()
-                    else:
+                    elif not args.skip_version:
                         # No update needed
                         printstatus(1, displayname)
                         continue
@@ -156,44 +292,96 @@ def main():
                     modrepo = Repo.clone_from("https://github.com/"
                                               + github_loc + ".git",
                                               displayname)
-                    for f in glob.glob(displayname + r"/@*"):
-                        shutil.move(f, moddir + "/" + displayname)
+                    for mod_file in glob.glob(displayname + r"/@*"):
+                        shutil.move(mod_file, moddir + "/" + displayname)
 
                 printstatus(2, displayname)
             # ace_optionals
-            if mod[0] == "ace_optinals"
+            if mod[0] == "ace_optionals":
                 ace_optional_files.append(mod[1])
                 printstatus(4, mod[1])
             # Steam Workshop
-            if mod[0] == "workshop":
+            if mod[0] == "steam":
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
-                printstatus(3, displayname)
-
+                printstatus(3, mod[1])
+            # update loop done
+        # loop done
+    # loop complete
     # Steam Workshop
-    with open("steambag.tmp", "wb") as f:
-        login = input("Login: ")
-        passwd = getpass.getpass()
-        steamguard = input("Steam Guard Code: ")
-        f.write("login " + login + " " + passwd + " " + steamguard)
-        for id in workshop_ids:
-            f.write("workshop_download_item 107410 " + id)
-        f.write("quit")
-    subprocess.run(["bash " + steamcmd, "+runscript steambag.tmp"],
-                   stdout=subprocess.PIPE)
-    os.remove("steambag.tmp")
-    for i in range(len(workshop_ids)):
-        shutil.move(steamdownload + "/" + workshop_ids[i],
-                    moddir + "/" + workshop_names[i])
-        printstatus(2, workshop_name[i])
-    printstatus(2, "Steam Workshop")
-    
-    # ace_optinals
-    os.makedirs(moddir + "/@ace_optionals/addons", exist_ok=True)
-    for mod in ace_optional_files:
-        for file in glob.glob(moddir + "@ace/optionals/" + mod + r".pbo*")
-            shutil.copy(moddir + "@ace/optionals/" + file)
-    printstatus(2, "@ace_optionals")
+    if args.update:
+        with open("/tmp/steambag.tmp", "wb") as steambag:
+            printstatus(5)
+            login = input("Login: ")
+            passwd = getpass.getpass()
+            steamguard = input("Steam Guard Code: ")
+
+            steambag.write(bytes("login " + login + " " + passwd +
+                                 " " + steamguard + "\n", 'UTF-8'))
+
+            CURSOR_UP_ONE = '\x1b[1A'
+            ERASE_LINE = '\x1b[2K'
+            for i in range(3): # remove written stuff
+                print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
+
+            steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
+            # steambag.write(bytes("app_update \"233780\" validate\n", 'UTF-8')) # hopefully not needed
+            for workshop_id in workshop_ids:
+                steambag.write(bytes("workshop_download_item 107410 " +
+                                     workshop_id + " validate" + "\n", 'UTF-8'))
+                debug("wrote " + workshop_id + " to steambag")
+            steambag.write(bytes("quit", 'UTF-8'))
+
+        debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
+        if args.security == 1:
+            sys.stdout.write("\rHide Text for security reasons. THX VOLVO! " +
+                             "(disable with --security 0)" +
+                             VT100_FORMATS.HIDDEN + "\n")
+            sys.stdout.write("\rThis does not seem to be working. " +
+                             "Please use --security 2 instead\n")
+        if args.security == 2:
+            debug("redir steam output to /dev/null")
+            sys.stdout.write("\rVoiding Steam Output.\n" +
+                             "\tWARNING! This is of no means safe!\n")
+            os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp" +
+                      ">> /dev/null")
+        else:
+            os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
+
+        sys.stdout.write(VT100_FORMATS.HIDDEN_OFF)
+        debug("remove steambag")
+        os.remove("/tmp/steambag.tmp")
+
+        for i in range(len(workshop_ids)):
+            if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
+                printstatus(-2, workshop_names[i])
+                sys.stdout.write("\b Maybe Steam didn't donwload " + workshop_ids[i] + " correctrly?\n")
+                continue
+            if os.path.islink(moddir + "/@" + workshop_names[i]):
+                printstatus(6, moddir + "/@" + workshop_names[i])
+                continue
+
+            debug("create symlink " + moddir + "/@" + workshop_names[i] +
+                  " -> " + steamdownload + "/" + workshop_ids[i])
+            os.symlink(steamdownload + "/" + workshop_ids[i],
+                       moddir + "/@" + workshop_names[i])
+            """debug("copy \'" + steamdownload + "/" + workshop_ids[i] + "\' to \'"
+                  + moddir + "/" + workshop_names[i] + "\'")
+            shutil.copy(steamdownload + "/" + workshop_ids[i],
+                        moddir + "/" + workshop_names[i])"""
+            printstatus(2, workshop_names[i])
+        printstatus(2, "Steam Workshop")
+
+        # ace_optinals
+        os.makedirs(moddir + "/@ace_optionals/addons", exist_ok=True)
+        for mod in ace_optional_files:
+            for pbo in glob.glob1(os.path.join(moddir,
+                                               '@ACE/optionals/',
+                                               mod), '.pbo*'):
+                shutil.copy(moddir + "@ACE/optionals/" + pbo)
+        printstatus(2, "@ace_optionals")
+        
+        # check mods for @'s
 
     return
 
