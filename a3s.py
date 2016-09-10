@@ -177,10 +177,14 @@ def main():
                         help="set security level")
     parser.add_argument("--ignore-version", action="store_true",
                         help="ignore version checking", dest="skip_version")
-    parser.add_argument("--steam-only", action="store_true",
-                        help="update only Steam Workshop Mods", dest="workshop_only")
     parser.add_argument("--reset-steam", action="store_true",
                         help="reset Steam to redownload all files", dest="workshop_reset")
+
+    one_source_only_group = parser.add_mutually_exclusive_group()
+    one_source_only_group.add_argument("--steam-only", action="store_true",
+                        help="update only Steam Workshop Mods", dest="workshop_only")
+    one_source_only_group.add_argument("--no-steam", action="store_true",
+                        help="do not update Steam Workshop Mods", dest="no_workshop")
 
     args = parser.parse_args()
 
@@ -197,6 +201,13 @@ def main():
 
     if is_debug:
         print(args)
+
+    github_enabled = True
+    workshop_enabled = True
+    if args.workshop_only:
+        github_enabled = False
+    if args.no_workshop:
+        workshop_enabled = False
 
     # Read existing config
     modlist = list()
@@ -218,7 +229,7 @@ def main():
             continue
         if args.update:
             # Github Release
-            if mod[0] == "github-release" and not args.workshop_only:
+            if mod[0] == "github-release" and github_enabled:
                 displayname = mod[1]
                 github_loc = mod[2]
                 file_format = mod[3]
@@ -283,7 +294,7 @@ def main():
 
                 printstatus(2, displayname)
             # Github
-            if mod[0] == "github" and not args.workshop_only:
+            if mod[0] == "github" and github_enabled:
                 displayname = mod[1]
                 github_loc = mod[2]
                 printstatus(0, displayname)
@@ -318,11 +329,12 @@ def main():
             # update loop done
         # loop done
     # loop complete
+
     # Steam Workshop
     if args.workshop_reset:
-        os.remove("/home/arma3/steamcmd/steamapps/workshop/appworkshop_107410.acf")
+        os.remove("/home/arma3/steamcmd/steamapps/workshop/appworkshop_107410.acf") # make path relative
 
-    if args.update:
+    if args.update and workshop_enabled:
         with open("/tmp/steambag.tmp", "wb") as steambag:
             printstatus(5)
             login = input("Login: ")
@@ -340,7 +352,6 @@ def main():
             steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
             steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
             steambag.write(bytes("DepotDownloadProgressTimeout 90000\n", 'UTF-8'))
-            # steambag.write(bytes("app_update \"233780\" validate\n", 'UTF-8')) # hopefully not needed
             for workshop_id in workshop_ids:
                 steambag.write(bytes("workshop_download_item 107410 " +
                                      workshop_id + " validate" + "\n", 'UTF-8'))
@@ -380,23 +391,38 @@ def main():
                   " -> " + steamdownload + "/" + workshop_ids[i])
             os.symlink(steamdownload + "/" + workshop_ids[i],
                        moddir + "/@" + workshop_names[i])
-            """debug("copy \'" + steamdownload + "/" + workshop_ids[i] + "\' to \'"
-                  + moddir + "/" + workshop_names[i] + "\'")
-            shutil.copy(steamdownload + "/" + workshop_ids[i],
-                        moddir + "/" + workshop_names[i])"""
             printstatus(2, workshop_names[i])
         printstatus(2, "Steam Workshop")
 
-        # ace_optinals
-        os.makedirs(moddir + "/@ace_optionals/addons", exist_ok=True)
-        for mod in ace_optional_files:
-            for pbo in glob.glob1(os.path.join(moddir,
-                                               '@ACE/optionals/',
-                                               mod), '.pbo*'):
-                shutil.copy(moddir + "@ACE/optionals/" + pbo)
-        printstatus(2, "@ace_optionals")
-        
-        # check mods for @'s
+    # ace_optionals
+    if os.path.isdir(moddir + "/@ace_optionals"):
+        debug("existing @ace_optionals found. removing old files")
+        shutil.rmtree(moddir + "/@ace_optionals")
+    os.makedirs(moddir + "/@ace_optionals/addons")
+    for mod in ace_optional_files:
+        debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
+        for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
+            debug("found " + file)
+            if os.path.isdir(file):
+                debug("copy " + file + " to " +
+                      moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                shutil.copytree(file,
+                                moddir + "/@ace_optionals/addons/" +
+                                os.path.basename(file))
+            elif os.path.isfile(file):
+                debug("copy " + file + " to " +
+                      moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                shutil.copy(file,
+                            moddir + "/@ace_optionals/addons/" +
+                            os.path.basename(file))
+            else:
+                printstatus(-2, file)
+            """debug("create symlink " + moddir + "/@ace_optionals/addons/" +
+                  os.path.basename(file) + " -> " + file)
+            os.symlink(file, moddir + "/@ace_optionals/addons/" +
+                       os.path.basename(file))"""
+    printstatus(2, "@ace_optionals")
+    
 
     return
 
