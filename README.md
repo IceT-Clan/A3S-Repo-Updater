@@ -3,7 +3,7 @@ This is a Updater for Arma3Sync Repositorys. It allows many different sources to
 
 ## Features
 * Mods on Steam Workshop
-* Mods on Github (configurable paths)
+* Mods on Github
 * Mods on armedassault.info
 * Pre-Configured Mods
  * ace_optionals generation
