@@ -9,8 +9,10 @@ import sys
 import zipfile
 import subprocess
 import getpass
+import re
+import urllib
 
-from git import Repo
+from pyunpack import Archive
 from requests import get
 
 
@@ -93,7 +95,7 @@ class VT100_FORMATS:
 
 
 def download(url, file_name):
-    debug("download " + url + " as " + file_name)
+    debug("\ndownload " + url + " as " + file_name)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
@@ -144,10 +146,15 @@ def printstatus(state, displayname="NO DISPLAY NAME"):
                          "Maybe SteamCMD did not download " + displayname +
                          " correctly? " +
                          "(use --steam-only to skip other sources)" + "\n")
+    elif state == -4:
+        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
+                         " ] " + displayname  + " is not a valid RAR-Archive"
+                         + "\n")
+
 
 def debug(msg):
     if is_debug:
-        sys.stdout.write("\r" + "[" + VT100_FORMATS.BOLD + "DEBUG" + VT100_FORMATS.RESET +
+        sys.stdout.write("[" + VT100_FORMATS.BOLD + "DEBUG" + VT100_FORMATS.RESET +
                          "] " + msg + "\n")
 
 
@@ -180,11 +187,14 @@ def main():
     parser.add_argument("--reset-steam", action="store_true",
                         help="reset Steam to redownload all files", dest="workshop_reset")
 
-    one_source_only_group = parser.add_mutually_exclusive_group()
-    one_source_only_group.add_argument("--steam-only", action="store_true",
-                        help="update only Steam Workshop Mods", dest="workshop_only")
-    one_source_only_group.add_argument("--no-steam", action="store_true",
-                        help="do not update Steam Workshop Mods", dest="no_workshop")
+    parser.add_argument("--steam-only", action="store_true",
+                    help="update only Steam Workshop Mods", dest="workshop_only")
+    parser.add_argument("--no-steam", action="store_true",
+                    help="do not update Steam Workshop Mods", dest="no_workshop")
+    parser.add_argument("--no-github", action="store_true",
+                    help="do not update Github Mods", dest="no_github")
+    parser.add_argument("--no-ace-optionals", action="store_true",
+                    help="do not generate new ace_optionals", dest="no_ace_optionals")
 
     args = parser.parse_args()
 
@@ -204,10 +214,16 @@ def main():
 
     github_enabled = True
     workshop_enabled = True
+    ace_optionals_enabled = True
     if args.workshop_only:
         github_enabled = False
+        ace_optionals_enabled = False
     if args.no_workshop:
         workshop_enabled = False
+    if args.no_github:
+        github_enabled = False
+    if args.no_ace_optionals:
+        ace_optionals_enabled = False
 
     # Read existing config
     modlist = list()
@@ -318,14 +334,97 @@ def main():
 
                 printstatus(2, displayname)
             # ace_optionals
-            if mod[0] == "ace_optionals":
+            if mod[0] == "ace_optionals" and ace_optionals_enabled:
                 ace_optional_files.append(mod[1])
                 printstatus(4, mod[1])
             # Steam Workshop
-            if mod[0] == "steam":
+            if mod[0] == "steam" and workshop_enabled:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
                 printstatus(3, mod[1])
+            if mod[0] == "curl_biggest_zip":
+                displayname = mod[1]
+                url = mod[2]
+                curl_version = mod[3]
+                current_version = mod[4]
+                new_version = str()
+                savedfile = displayname + ".zip"
+                
+                printstatus(0, displayname)
+                download(url, "/tmp/" + displayname + ".tmp")
+                with open("/tmp/" + displayname + ".tmp", "r") as page:
+                    versions = list()
+                    for line in page:
+                        line = re.findall(curl_version, line)
+                        if line:
+                            line = line[0].split('"')[0]
+                            versions.append(line)
+                    versions.append(current_version)
+                    versions.sort(reverse=True)
+                    new_version = versions[0]
+                if current_version == new_version and not args.skip_version:
+                    printstatus(1, displayname)
+                    continue
+                download(os.path.join(url, new_version), savedfile)
+                if not zipfile.is_zipfile(savedfile):
+                    printstatus(-1, displayname)
+                    continue
+                dir = str()
+                with zipfile.ZipFile(savedfile, "r") as packed:
+                    for zipinfo in packed.namelist():
+                        dir = packed.extract(zipinfo, moddir)
+                os.remove(savedfile)
+
+                old_line = ",".join([str(x) for x in mod])
+                new_line = old_line.replace(current_version, new_version)
+                for line in fileinput.input("repo.cfg", inplace=1):
+                    if old_line in line:
+                        line = line.replace(old_line, new_line)
+                    sys.stdout.write(line)
+                printstatus(2, displayname)
+            if mod[0] == "curl_biggest_rar":
+                displayname = mod[1]
+                url = mod[2]
+                curl_version = mod[3]
+                current_version = mod[4]
+                new_version = str()
+                savedfile = displayname + ".rar"
+                
+                printstatus(0, displayname)
+                download(url, "/tmp/" + displayname + ".tmp")
+                with open("/tmp/" + displayname + ".tmp", "r") as page:
+                    versions = list()
+                    for line in page:
+                        line = re.findall(curl_version, line)
+                        if line:
+                            line = line[0].split('"')[0]
+                            versions.append(line)
+                    versions.append(current_version)
+                    versions.sort(reverse=True)
+                    new_version = versions[0]
+                if current_version == new_version and not args.skip_version:
+                    debug(current_version + " == " + new_version)
+                    printstatus(1, displayname)
+                    continue
+                download(os.path.join(url, new_version), savedfile)
+                """if not rarfile.is_rarfile(savedfile):
+                    printstatus(-4, displayname)
+                    continue"""
+                # dir = str()
+                """with rarfile.RarFile(savedfile) as packed:
+                    for rarinfo in packed.infolist():
+                        dir = packed.extract(rarinfo, moddir + "/@" + displayname)"""
+                Archive(savedfile).extractall(moddir)
+                os.remove(savedfile)
+
+                old_line = ",".join([str(x) for x in mod])
+                new_line = old_line.replace(current_version, new_version)
+                for line in fileinput.input("repo.cfg", inplace=1):
+                    if old_line in line:
+                        line = line.replace(old_line, new_line)
+                    sys.stdout.write(line)
+                printstatus(2, displayname)
+
             # update loop done
         # loop done
     # loop complete
@@ -395,33 +494,34 @@ def main():
         printstatus(2, "Steam Workshop")
 
     # ace_optionals
-    if os.path.isdir(moddir + "/@ace_optionals"):
-        debug("existing @ace_optionals found. removing old files")
-        shutil.rmtree(moddir + "/@ace_optionals")
-    os.makedirs(moddir + "/@ace_optionals/addons")
-    for mod in ace_optional_files:
-        debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
-        for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
-            debug("found " + file)
-            if os.path.isdir(file):
-                debug("copy " + file + " to " +
-                      moddir + "/@ace_optionals/addons/" + os.path.basename(file))
-                shutil.copytree(file,
+    if args.update and ace_optionals_enabled:
+        if os.path.isdir(moddir + "/@ace_optionals"):
+            debug("existing @ace_optionals found. removing old files")
+            shutil.rmtree(moddir + "/@ace_optionals")
+        os.makedirs(moddir + "/@ace_optionals/addons")
+        for mod in ace_optional_files:
+            debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
+            for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
+                debug("found " + file)
+                if os.path.isdir(file):
+                    debug("copy " + file + " to " +
+                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                    shutil.copytree(file,
+                                    moddir + "/@ace_optionals/addons/" +
+                                    os.path.basename(file))
+                elif os.path.isfile(file):
+                    debug("copy " + file + " to " +
+                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                    shutil.copy(file,
                                 moddir + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
-            elif os.path.isfile(file):
-                debug("copy " + file + " to " +
-                      moddir + "/@ace_optionals/addons/" + os.path.basename(file))
-                shutil.copy(file,
-                            moddir + "/@ace_optionals/addons/" +
-                            os.path.basename(file))
-            else:
-                printstatus(-2, file)
-            """debug("create symlink " + moddir + "/@ace_optionals/addons/" +
-                  os.path.basename(file) + " -> " + file)
-            os.symlink(file, moddir + "/@ace_optionals/addons/" +
-                       os.path.basename(file))"""
-    printstatus(2, "@ace_optionals")
+                else:
+                    printstatus(-2, file)
+                """debug("create symlink " + moddir + "/@ace_optionals/addons/" +
+                      os.path.basename(file) + " -> " + file)
+                os.symlink(file, moddir + "/@ace_optionals/addons/" +
+                           os.path.basename(file))"""
+        printstatus(2, "@ace_optionals")
     
 
     return
