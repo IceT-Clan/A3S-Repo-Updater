@@ -5,30 +5,20 @@
 * Mods on Steam Workshop
 * Mods on Github (configurable paths)
 * Mods on armedassault.info
-* Pre-Configured Mods
- * ACE3 with ace_optinals generation
- * RHS
- * CBA_A3
- * TFAR
- * ACRE2
- * JSRS4 Apex
+* ace_optionals generation
 
-## Installation
-installer.py
+## Requirements
+* [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD#Downloading_SteamCMD)
+* [python3](https://www.python.org/downloads/)
+* [pyunpack](https://pypi.python.org/pypi/pyunpack)
+* [patool](https://pypi.python.org/pypi/patool)
 
 ## Usage
-a3s-repo-updater.py add
+a3s-repo-updater.py --add
 
-a3s-repo-updater.py remove
+a3s-repo-updater.py --remove
 
-a3s-repo-updater.py update
-
-a3s-repo-updater.py settings
-
-installer.py update
-
-## Uninstallation
-installer.py remove
+a3s-repo-updater.py --update
 
 ## License
 A3S Repository Updater is licensed under the [MIT license](LICENSE).
