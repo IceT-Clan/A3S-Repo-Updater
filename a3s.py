@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""python powererd Arma3 Mod Downloader for Arma3Sync Repositorys"""
+
 import argparse
 import fileinput
 import git
@@ -7,16 +9,17 @@ import os
 import shutil
 import sys
 import zipfile
-import subprocess
 import getpass
 import re
-import urllib
+import distutils.dir_util
 
 from pyunpack import Archive
 from requests import get
+from ftplib import FTP
 
+is_debug = False
 
-class VT100_FORMATS:
+class VT100Formats:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
         ANSI/VT100 colors and formats"""
 
@@ -31,7 +34,7 @@ class VT100_FORMATS:
     HIDDEN = '\033[8m'
 
     RESET = '\033[m'
-    
+
     BOLD_OFF = '\033[21m'
     DIM_OFF = '\033[22m'
     STANDOUT_OFF = '\033[23m'
@@ -85,80 +88,91 @@ class VT100_FORMATS:
 
     B_WHITE = '\033[107m'
 
+    F_COLOR_INIT = '\033[38;5;'
+    B_COLOR_INIT = '\033[48;5;'
+
     # 256 forground colors
-    def f_color(color_number):
-        return '\033[38;5;' + color_number + 'm'
+    def f_color(self, color_number):
+        """print foreground color switch"""
+        return self.F_COLOR_INIT + color_number + 'm'
 
     # 256 background colors
-    def b_color(color_number):
-        return '\033[48;5;' + color_number + 'm'
+    def b_color(self, color_number):
+        """print background color switch"""
+        return self.B_COLOR_INIT + color_number + 'm'
 
 
 def download(url, file_name):
-    debug("\ndownload " + url + " as " + file_name)
+    """download url to file_name"""
+    debug("download " + url + " as " + file_name, True)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
 
 
 def printstatus(state, displayname="NO DISPLAY NAME"):
+    """print a staus state with displayname"""
     if state == 0:
         # Updating
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_YELLOW + "WAIT" + VT100_FORMATS.RESET +
-                         " ] " + "Updating " + displayname + "...")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
+                         + VT100Formats.RESET + " ] " + "Updating " +
+                         displayname + "...")
     elif state == 1:
-        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_GREEN + "OK" + VT100_FORMATS.RESET +
-                         "  ] " + displayname + " is up to date"
-                         + "\n")
+        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_GREEN + "OK"
+                         + VT100Formats.RESET + "  ] " + displayname +
+                         " is up to date" + "\n")
     elif state == 2:
-        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_GREEN + "OK" + VT100_FORMATS.RESET +
-                         "  ] " + displayname + " successfully updated"
-                         + "\n")
+        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_GREEN + "OK"
+                         + VT100Formats.RESET + "  ] " + displayname
+                         + " successfully updated" + "\n")
     elif state == 3:
-        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_BLUE + "OK" + VT100_FORMATS.RESET +
-                         "  ] " + displayname +
-                         " has been added to the Steam Bag"
-                         + "\n")
+        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_BLUE + "OK"
+                         + VT100Formats.RESET + "  ] " + displayname +
+                         " has been added to the Steam Bag" + "\n")
     elif state == 4:
-        sys.stdout.write("\r"   + "[  " + VT100_FORMATS.F_L_BLUE + "OK" + VT100_FORMATS.RESET +
-                         "  ] " + displayname +
-                         " will be added to @ace_optinals"
-                         + "\n")
+        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_BLUE + "OK"
+                         + VT100Formats.RESET + "  ] " + displayname +
+                         " will be added to @ace_optinals" + "\n")
     elif state == 5:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_YELLOW + "WAIT" + VT100_FORMATS.RESET +
-                         " ] " + "doing Steam Workshop"
-                         + "\n")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
+                         + VT100Formats.RESET + " ] " +
+                         "doing Steam Workshop" + "\n")
     elif state == 6:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_BLUE + "SKIP" + VT100_FORMATS.RESET +
-                         " ] " + displayname + " is already linked"
-                         + "\n")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_BLUE + "SKIP"
+                         + VT100Formats.RESET + " ] " + displayname +
+                         " is already linked" + "\n")
     elif state == -1:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
-                         " ] " + displayname  + " is not a valid ZIP-Archive"
-                         + "\n")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+                         + VT100Formats.RESET + " ] " + displayname +
+                         " is not a valid ZIP-Archive" + "\n")
     elif state == -2:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
-                         " ] " + displayname  + " does not exist"
-                         + "\n")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+                         + VT100Formats.RESET + " ] " + displayname +
+                         " does not exist" + "\n")
     elif state == -3:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" +
-                         VT100_FORMATS.RESET + " ] " +
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+                         + VT100Formats.RESET + " ] " +
                          "Maybe SteamCMD did not download " + displayname +
                          " correctly? " +
                          "(use --steam-only to skip other sources)" + "\n")
     elif state == -4:
-        sys.stdout.write("\r"  + "[ " + VT100_FORMATS.F_L_RED + "FAIL" + VT100_FORMATS.RESET +
-                         " ] " + displayname  + " is not a valid RAR-Archive"
-                         + "\n")
+        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+                         + VT100Formats.RESET + " ] " + displayname +
+                         " is not a valid RAR-Archive" + "\n")
 
-
-def debug(msg):
+def debug(msg, add_newline=False):
+    """print debug messages"""
+    if add_newline:
+        newline = "\n"
+    else:
+        newline = ""
     if is_debug:
-        sys.stdout.write("[" + VT100_FORMATS.BOLD + "DEBUG" + VT100_FORMATS.RESET +
-                         "] " + msg + "\n")
+        sys.stdout.write(newline + "[" + VT100Formats.BOLD + "DEBUG"
+                         + VT100Formats.RESET + "] " + str(msg) + "\n")
 
 
 def main():
+    """main"""
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
@@ -174,27 +188,32 @@ def main():
                         action="store_true")
 
     group.add_argument("-a", "--add", action="store_true",
-                        help="Add mod to repository")
+                       help="Add mod to repository")
     group.add_argument("-r", "--remove", action="store_true",
-                        help="Remove mod from repository")
+                       help="Remove mod from repository")
     group.add_argument("-u", "--update", action="store_true",
-                        help="Update repository")
+                       help="Update repository")
 
     parser.add_argument("--security", type=int, default=1,
                         help="set security level")
     parser.add_argument("--ignore-version", action="store_true",
                         help="ignore version checking", dest="skip_version")
     parser.add_argument("--reset-steam", action="store_true",
-                        help="reset Steam to redownload all files", dest="workshop_reset")
+                        help="reset Steam to redownload all files",
+                        dest="workshop_reset")
 
     parser.add_argument("--steam-only", action="store_true",
-                    help="update only Steam Workshop Mods", dest="workshop_only")
+                        help="update only Steam Workshop Mods",
+                        dest="workshop_only")
     parser.add_argument("--no-steam", action="store_true",
-                    help="do not update Steam Workshop Mods", dest="no_workshop")
+                        help="do not update Steam Workshop Mods",
+                        dest="no_workshop")
     parser.add_argument("--no-github", action="store_true",
-                    help="do not update Github Mods", dest="no_github")
+                        help="do not update Github Mods",
+                        dest="no_github")
     parser.add_argument("--no-ace-optionals", action="store_true",
-                    help="do not generate new ace_optionals", dest="no_ace_optionals")
+                        help="do not generate new ace_optionals",
+                        dest="no_ace_optionals")
 
     args = parser.parse_args()
 
@@ -210,7 +229,7 @@ def main():
         args.security = 2
 
     if is_debug:
-        print(args)
+        debug(args)
 
     github_enabled = True
     workshop_enabled = True
@@ -238,10 +257,13 @@ def main():
     for mod in modlist:
         if mod[0] == "repolocation":
             moddir = mod[1]
+            debug("Repo:" + moddir)
             continue
         if mod[0] == "steamcmd":
             steamcmd = mod[1]
             steamdownload = mod[2]
+            debug("steamcmd:" + steamcmd +
+                  " steamdownload:" + steamdownload)
             continue
         if args.update:
             # Github Release
@@ -255,9 +277,9 @@ def main():
                     modrepo = git.Repo(displayname)
                     modrepo.remotes.origin.pull()
                 else:
-                    modrepo = Repo.clone_from("https://github.com/"
-                                              + github_loc + ".git",
-                                              displayname)
+                    modrepo = git.Repo.clone_from("https://github.com/"
+                                                  + github_loc + ".git",
+                                                  displayname)
 
                 # Check if an update is available
                 new_tag = str(modrepo.tags[-1])
@@ -288,16 +310,16 @@ def main():
                 if not zipfile.is_zipfile(savedfile):
                     printstatus(-1, displayname)
                     continue
-                dir = str()
+                target_dir = str()
                 with zipfile.ZipFile(savedfile, "r") as packed:
                     for zipinfo in packed.namelist():
-                        dir = packed.extract(zipinfo, moddir)
-                    #dir = packed.extractall(moddir)
-                dir = dir.split('/')[1]
-                debug("rename " + os.path.join(moddir, dir) + " to " +
-                      os.path.join(moddir, "@" + displayname))
-                os.rename(os.path.join(moddir, dir),
-                          os.path.join(moddir, "@" + displayname))
+                        target_dir = packed.extract(zipinfo, moddir)
+                target_dir = target_dir.replace(moddir, '')
+                target_dir = target_dir.split('/')[1]
+                debug("rename " + moddir + "/" + target_dir + " to " +
+                      moddir + "/" + "@" + displayname)
+                os.rename(moddir + "/" + target_dir,
+                          moddir + "/" + "@" + displayname)
                 os.remove(savedfile)  # Remove .zip file
 
                 # Write new version to config
@@ -326,9 +348,9 @@ def main():
                         printstatus(1, displayname)
                         continue
                 else:
-                    modrepo = Repo.clone_from("https://github.com/"
-                                              + github_loc + ".git",
-                                              displayname)
+                    modrepo = git.Repo.clone_from("https://github.com/"
+                                                  + github_loc + ".git",
+                                                  displayname)
                     for mod_file in glob.glob(displayname + r"/@*"):
                         shutil.move(mod_file, moddir + "/" + displayname)
 
@@ -349,7 +371,7 @@ def main():
                 current_version = mod[4]
                 new_version = str()
                 savedfile = displayname + ".zip"
-                
+
                 printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
@@ -369,10 +391,10 @@ def main():
                 if not zipfile.is_zipfile(savedfile):
                     printstatus(-1, displayname)
                     continue
-                dir = str()
+                target_dir = str()
                 with zipfile.ZipFile(savedfile, "r") as packed:
                     for zipinfo in packed.namelist():
-                        dir = packed.extract(zipinfo, moddir)
+                        target_dir = packed.extract(zipinfo, moddir)
                 os.remove(savedfile)
 
                 old_line = ",".join([str(x) for x in mod])
@@ -389,7 +411,7 @@ def main():
                 current_version = mod[4]
                 new_version = str()
                 savedfile = displayname + ".rar"
-                
+
                 printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
@@ -407,13 +429,6 @@ def main():
                     printstatus(1, displayname)
                     continue
                 download(os.path.join(url, new_version), savedfile)
-                """if not rarfile.is_rarfile(savedfile):
-                    printstatus(-4, displayname)
-                    continue"""
-                # dir = str()
-                """with rarfile.RarFile(savedfile) as packed:
-                    for rarinfo in packed.infolist():
-                        dir = packed.extract(rarinfo, moddir + "/@" + displayname)"""
                 Archive(savedfile).extractall(moddir)
                 os.remove(savedfile)
 
@@ -424,6 +439,55 @@ def main():
                         line = line.replace(old_line, new_line)
                     sys.stdout.write(line)
                 printstatus(2, displayname)
+            if mod[0] == "ftp_curl_biggest_torrent":
+                displayname = mod[1]
+                server = mod[2]
+                target_dir = mod[3]
+                curl_version = mod[4]
+                current_version = mod[5]
+                new_version = str()
+                savedfile = displayname + ".torrent"
+
+                printstatus(0, displayname)
+                with FTP(server) as ftp:
+                    ftp.login()
+                    ftp.cwd(target_dir)
+                    #lines = ftp.nlst()
+                    lines = list()
+                    ftp.dir('-t', lines.append)
+                    ver_begin_i = curl_version.find("$version")
+                    ver_bef = curl_version[:ver_begin_i]
+                    ver_end_i = curl_version.find("$version") + len("$version")
+                    ver_aftr = curl_version[ver_end_i:]
+                    ver_bef_i = lines[0].find(ver_bef) + len(ver_bef)
+                    ver_aftr_i = lines[0].find(ver_aftr)
+                    lines[0] = lines[0][ver_bef_i:ver_aftr_i]
+                    new_version = lines[0]
+                    complete_file = curl_version.replace("$version",
+                                                         new_version)
+
+                    debug("send 'RETR %s" % complete_file + "' from '" +
+                          target_dir + "' to '" + server +
+                          "' and save answer to '" + savedfile + "'",
+                          True)
+                    ftp.retrbinary("RETR %s" % complete_file,
+                                   open(savedfile, 'wb').write)
+                # download torrent from savedfile
+                os.system("python2 torrent.py " + savedfile + " ./")
+            if mod[0] == "curl_folder":
+                displayname = mod[1]
+                url = mod[2]
+                #path = mod[3]
+                path = mod[2].split("//")[1]
+                printstatus(0, displayname)
+                if path.endswith("/"):
+                    path = path[:-1]
+                os.system("wget -qq -r " + url)
+                distutils.dir_util.copy_tree(path, moddir + "/" +
+                                             path.split("/")[-1])
+                shutil.move(moddir + "/" + path.split("/")[-1],
+                            moddir + "/" + "@" + displayname)
+                printstatus(2, displayname)
 
             # update loop done
         # loop done
@@ -431,7 +495,8 @@ def main():
 
     # Steam Workshop
     if args.workshop_reset:
-        os.remove("/home/arma3/steamcmd/steamapps/workshop/appworkshop_107410.acf") # make path relative
+        os.remove("/home/arma3/steamcmd/steamapps/" +
+                  "workshop/appworkshop_107410.acf") # make path relative
 
     if args.update and workshop_enabled:
         with open("/tmp/steambag.tmp", "wb") as steambag:
@@ -461,7 +526,7 @@ def main():
         if args.security == 1:
             sys.stdout.write("\rHide Text for security reasons. THX VOLVO! " +
                              "(disable with --security 0)" +
-                             VT100_FORMATS.HIDDEN + "\n")
+                             VT100Formats.HIDDEN + "\n")
             sys.stdout.write("\rThis does not seem to be working. " +
                              "Please use --security 2 instead\n")
         if args.security == 2:
@@ -473,7 +538,7 @@ def main():
         else:
             os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
 
-        sys.stdout.write(VT100_FORMATS.HIDDEN_OFF)
+        sys.stdout.write(VT100Formats.HIDDEN_OFF)
         debug("remove steambag")
         os.remove("/tmp/steambag.tmp")
 
@@ -522,7 +587,7 @@ def main():
                 os.symlink(file, moddir + "/@ace_optionals/addons/" +
                            os.path.basename(file))"""
         printstatus(2, "@ace_optionals")
-    
+
 
     return
 
