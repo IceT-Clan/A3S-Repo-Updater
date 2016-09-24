@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""python powererd Arma3 Mod Downloader for Arma3Sync Repositorys"""
+"""Python-powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
 import argparse
 import fileinput
@@ -18,6 +18,7 @@ from requests import get
 from ftplib import FTP
 
 is_debug = False
+
 
 class VT100Formats:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
@@ -114,51 +115,52 @@ def printstatus(state, displayname="NO DISPLAY NAME"):
     """print a staus state with displayname"""
     if state == 0:
         # Updating
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
                          + VT100Formats.RESET + " ] " + "Updating " +
                          displayname + "...")
     elif state == 1:
-        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_GREEN + "OK"
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK"
                          + VT100Formats.RESET + "  ] " + displayname +
                          " is up to date" + "\n")
     elif state == 2:
-        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_GREEN + "OK"
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK"
                          + VT100Formats.RESET + "  ] " + displayname
                          + " successfully updated" + "\n")
     elif state == 3:
-        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_BLUE + "OK"
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK"
                          + VT100Formats.RESET + "  ] " + displayname +
                          " has been added to the Steam Bag" + "\n")
     elif state == 4:
-        sys.stdout.write("\r"   + "[  " + VT100Formats.F_L_BLUE + "OK"
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK"
                          + VT100Formats.RESET + "  ] " + displayname +
                          " will be added to @ace_optinals" + "\n")
     elif state == 5:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
                          + VT100Formats.RESET + " ] " +
                          "doing Steam Workshop" + "\n")
     elif state == 6:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_BLUE + "SKIP"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_BLUE + "SKIP"
                          + VT100Formats.RESET + " ] " + displayname +
                          " is already linked" + "\n")
     elif state == -1:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
                          + VT100Formats.RESET + " ] " + displayname +
                          " is not a valid ZIP-Archive" + "\n")
     elif state == -2:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
                          + VT100Formats.RESET + " ] " + displayname +
                          " does not exist" + "\n")
     elif state == -3:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
                          + VT100Formats.RESET + " ] " +
                          "Maybe SteamCMD did not download " + displayname +
                          " correctly? " +
                          "(use --steam-only to skip other sources)" + "\n")
     elif state == -4:
-        sys.stdout.write("\r"  + "[ " + VT100Formats.F_L_RED + "FAIL"
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
                          + VT100Formats.RESET + " ] " + displayname +
                          " is not a valid RAR-Archive" + "\n")
+
 
 def debug(msg, add_newline=False):
     """print debug messages"""
@@ -452,7 +454,7 @@ def main():
                 with FTP(server) as ftp:
                     ftp.login()
                     ftp.cwd(target_dir)
-                    #lines = ftp.nlst()
+                    # lines = ftp.nlst()
                     lines = list()
                     ftp.dir('-t', lines.append)
                     ver_begin_i = curl_version.find("$version")
@@ -477,7 +479,7 @@ def main():
             if mod[0] == "curl_folder":
                 displayname = mod[1]
                 url = mod[2]
-                #path = mod[3]
+                # path = mod[3]
                 path = mod[2].split("//")[1]
                 printstatus(0, displayname)
                 if path.endswith("/"):
@@ -496,7 +498,7 @@ def main():
     # Steam Workshop
     if args.workshop_reset:
         os.remove("/home/arma3/steamcmd/steamapps/" +
-                  "workshop/appworkshop_107410.acf") # make path relative
+                  "workshop/appworkshop_107410.acf")  # make path relative
 
     if args.update and workshop_enabled:
         with open("/tmp/steambag.tmp", "wb") as steambag:
@@ -510,15 +512,17 @@ def main():
 
             CURSOR_UP_ONE = '\x1b[1A'
             ERASE_LINE = '\x1b[2K'
-            for i in range(3): # remove written stuff
+            for i in range(3):  # remove written stuff
                 print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
 
             steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
             steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
-            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n", 'UTF-8'))
+            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n",
+                                 'UTF-8'))
             for workshop_id in workshop_ids:
                 steambag.write(bytes("workshop_download_item 107410 " +
-                                     workshop_id + " validate" + "\n", 'UTF-8'))
+                                     workshop_id + " validate" + "\n",
+                                     'UTF-8'))
                 debug("wrote " + workshop_id + " to steambag")
             steambag.write(bytes("quit", 'UTF-8'))
 
@@ -570,13 +574,15 @@ def main():
                 debug("found " + file)
                 if os.path.isdir(file):
                     debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                          moddir + "/@ace_optionals/addons/"
+                          + os.path.basename(file))
                     shutil.copytree(file,
                                     moddir + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
                     debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                          moddir + "/@ace_optionals/addons/" +
+                          os.path.basename(file))
                     shutil.copy(file,
                                 moddir + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
@@ -587,7 +593,6 @@ def main():
                 os.symlink(file, moddir + "/@ace_optionals/addons/" +
                            os.path.basename(file))"""
         printstatus(2, "@ace_optionals")
-
 
     return
 
