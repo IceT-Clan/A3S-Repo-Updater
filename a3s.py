@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""python powererd Arma3 Mod Downloader for Arma3Sync Repositorys"""
+"""python powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
 import argparse
 import fileinput
@@ -11,13 +11,12 @@ import sys
 import zipfile
 import getpass
 import re
+import subprocess
 import distutils.dir_util
 
 from pyunpack import Archive
 from requests import get
 from ftplib import FTP
-
-is_debug = False
 
 class VT100Formats:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
@@ -221,7 +220,6 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    global is_debug
     is_debug = args.debug
     debug("enabled")
 
@@ -483,10 +481,17 @@ def main():
                 if path.endswith("/"):
                     path = path[:-1]
                 os.system("wget -qq -r " + url)
+                debug("copytree " + path + " --> " + moddir + "/" +
+                      "@" + displayname)
                 distutils.dir_util.copy_tree(path, moddir + "/" +
-                                             path.split("/")[-1])
-                shutil.move(moddir + "/" + path.split("/")[-1],
-                            moddir + "/" + "@" + displayname)
+                                             "@" + displayname)
+                #                             path.split("/")[-1])
+                shutil.rmtree(path)
+                """shutil.move(moddir + "/" + path.split("/")[-1],
+                            moddir + "/" + "@" + displayname)"""
+                """subprocess.Popen(["mv", moddir + "/" + path.split("/")[-1],
+                                moddir + "/" + "@" + displayname],
+                                stdout=subprocess.PIPE)"""
                 printstatus(2, displayname)
 
             # update loop done
@@ -512,10 +517,11 @@ def main():
             ERASE_LINE = '\x1b[2K'
             for i in range(3): # remove written stuff
                 print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
-
+            # test if bytes can be removed
             steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
             steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
-            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n", 'UTF-8'))
+            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n",
+                                 'UTF-8'))
             for workshop_id in workshop_ids:
                 steambag.write(bytes("workshop_download_item 107410 " +
                                      workshop_id + " validate" + "\n", 'UTF-8'))
@@ -570,23 +576,22 @@ def main():
                 debug("found " + file)
                 if os.path.isdir(file):
                     debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                          moddir + "/@ace_optionals/addons/" +
+                          os.path.basename(file))
                     shutil.copytree(file,
                                     moddir + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
                     debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" + os.path.basename(file))
+                          moddir + "/@ace_optionals/addons/" +
+                          os.path.basename(file))
                     shutil.copy(file,
                                 moddir + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
                 else:
                     printstatus(-2, file)
-                """debug("create symlink " + moddir + "/@ace_optionals/addons/" +
-                      os.path.basename(file) + " -> " + file)
-                os.symlink(file, moddir + "/@ace_optionals/addons/" +
-                           os.path.basename(file))"""
         printstatus(2, "@ace_optionals")
+
 
 
     return
