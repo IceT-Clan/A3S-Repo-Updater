@@ -18,6 +18,7 @@ from pyunpack import Archive
 from requests import get
 from ftplib import FTP
 
+
 class VT100Formats:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
         ANSI/VT100 colors and formats"""
@@ -113,50 +114,50 @@ def printstatus(state, displayname="NO DISPLAY NAME"):
     """print a staus state with displayname"""
     if state == 0:
         # Updating
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
-                         + VT100Formats.RESET + " ] " + "Updating " +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT" +
+                         VT100Formats.RESET + " ] " + "Updating " +
                          displayname + "...")
     elif state == 1:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK"
-                         + VT100Formats.RESET + "  ] " + displayname +
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK" +
+                         VT100Formats.RESET + "  ] " + displayname +
                          " is up to date" + "\n")
     elif state == 2:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK"
-                         + VT100Formats.RESET + "  ] " + displayname
-                         + " successfully updated" + "\n")
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK" +
+                         VT100Formats.RESET + "  ] " + displayname +
+                         " successfully updated" + "\n")
     elif state == 3:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK"
-                         + VT100Formats.RESET + "  ] " + displayname +
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK" +
+                         VT100Formats.RESET + "  ] " + displayname +
                          " has been added to the Steam Bag" + "\n")
     elif state == 4:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK"
-                         + VT100Formats.RESET + "  ] " + displayname +
+        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK" +
+                         VT100Formats.RESET + "  ] " + displayname +
                          " will be added to @ace_optinals" + "\n")
     elif state == 5:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT"
-                         + VT100Formats.RESET + " ] " +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT" +
+                         VT100Formats.RESET + " ] " +
                          "doing Steam Workshop" + "\n")
     elif state == 6:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_BLUE + "SKIP"
-                         + VT100Formats.RESET + " ] " + displayname +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_BLUE + "SKIP" +
+                         VT100Formats.RESET + " ] " + displayname +
                          " is already linked" + "\n")
     elif state == -1:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
-                         + VT100Formats.RESET + " ] " + displayname +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
+                         VT100Formats.RESET + " ] " + displayname +
                          " is not a valid ZIP-Archive" + "\n")
     elif state == -2:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
-                         + VT100Formats.RESET + " ] " + displayname +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
+                         VT100Formats.RESET + " ] " + displayname +
                          " does not exist" + "\n")
     elif state == -3:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
-                         + VT100Formats.RESET + " ] " +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
+                         VT100Formats.RESET + " ] " +
                          "Maybe SteamCMD did not download " + displayname +
                          " correctly? " +
                          "(use --steam-only to skip other sources)" + "\n")
     elif state == -4:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL"
-                         + VT100Formats.RESET + " ] " + displayname +
+        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
+                         VT100Formats.RESET + " ] " + displayname +
                          " is not a valid RAR-Archive" + "\n")
 
 
@@ -167,8 +168,8 @@ def debug(msg, add_newline=False):
     else:
         newline = ""
     if is_debug:
-        sys.stdout.write(newline + "[" + VT100Formats.BOLD + "DEBUG"
-                         + VT100Formats.RESET + "] " + str(msg) + "\n")
+        sys.stdout.write(newline + "[" + VT100Formats.BOLD + "DEBUG" +
+                         VT100Formats.RESET + "] " + str(msg) + "\n")
 
 
 def main():
@@ -276,8 +277,8 @@ def main():
                     modrepo = git.Repo(displayname)
                     modrepo.remotes.origin.pull()
                 else:
-                    modrepo = git.Repo.clone_from("https://github.com/"
-                                                  + github_loc + ".git",
+                    modrepo = git.Repo.clone_from("https://github.com/" +
+                                                  github_loc + ".git",
                                                   displayname)
 
                 # Check if an update is available
@@ -347,8 +348,8 @@ def main():
                         printstatus(1, displayname)
                         continue
                 else:
-                    modrepo = git.Repo.clone_from("https://github.com/"
-                                                  + github_loc + ".git",
+                    modrepo = git.Repo.clone_from("https://github.com/" +
+                                                  github_loc + ".git",
                                                   displayname)
                     for mod_file in glob.glob(displayname + r"/@*"):
                         shutil.move(mod_file, moddir + "/" + displayname)
@@ -599,4 +600,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
