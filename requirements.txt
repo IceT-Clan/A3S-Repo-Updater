@@ -1,0 +1,11 @@
+#
+####### requirements.txt #######
+###
+# Usage: sudo pip install -r requirements.txt
+###
+#
+argparse
+gitpython
+glob2
+pyunpack
+requests
