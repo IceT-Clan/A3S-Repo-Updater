@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Python-powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
-import argparse
-import fileinput
-#from ftplib import FTP
+# Import Built-Ins
 import glob
 import os
 import shutil
@@ -13,11 +11,14 @@ import getpass
 import re
 import subprocess
 import distutils.dir_util
+# import Other
+import argparse
+import fileinput
+#from ftplib import FTP
 import git
-
 from pyunpack import Archive
 from requests import get
-
+# Import Locals
 import EscapeAnsi
 import console
 
@@ -38,6 +39,7 @@ def main():
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
+    ansi_escape = EscapeAnsi.EscapeAnsi()
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
@@ -45,8 +47,8 @@ def main():
 
     parser.add_argument("-v", "--version",
                         action="version", version='%(prog)s 0.2.0')
-    parser.add_argument("-d", "--output.debug",
-                        help="enable output.debug",
+    parser.add_argument("-d", "--debug",
+                        help="enable debug",
                         action="store_true")
 
     group.add_argument("-a", "--add", action="store_true",
@@ -83,9 +85,7 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-
-    is_debug = args.debug
-    output = console.Output(is_debug)
+    output = console.Output(args.debug)
     output.debug("enabled")
 
     if args.security > 2:
@@ -146,7 +146,7 @@ def main():
                 github_loc = mod[2]
                 file_format = mod[3]
                 cur_version = mod[4]
-                printstatus(0, displayname)
+                output.printstatus(0, displayname)
                 if os.path.isdir(displayname):
                     modrepo = git.Repo(displayname)
                     modrepo.remotes.origin.pull()
@@ -169,7 +169,7 @@ def main():
                     new_version = new_tag[1:]
                 if new_tag == cur_version and not args.skip_version:
                     # No update needed
-                    printstatus(1, displayname)
+                    output.printstatus(1, displayname)
                     continue
 
                 # Remove old Mod
@@ -180,16 +180,12 @@ def main():
                 zipname = file_format.replace("$version", new_version)
                 savedfile = displayname + ".zip"
                 output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-                """if args.output.debug: output.debug("download https://github.com/"
-                                     + github_loc +
-                                     "/releases/download/" + new_tag + "/"
-                                     + zipname + " as " + savedfile)"""
                 download("https://github.com/" + github_loc +
                          "/releases/download/" + new_tag + "/" + zipname,
                          savedfile)
 
                 if not zipfile.is_zipfile(savedfile):
-                    printstatus(-1, displayname)
+                    output.printstatus(-1, displayname)
                     continue
                 target_dir = str()
                 with zipfile.ZipFile(savedfile, "r") as packed:
@@ -197,8 +193,8 @@ def main():
                         target_dir = packed.extract(zipinfo, moddir)
                 target_dir = target_dir.replace(moddir, '')
                 target_dir = target_dir.split('/')[1]
-                output.debug("rename " + moddir + "/" + target_dir + " to " +
-                      moddir + "/" + "@" + displayname)
+                output.debug("rename " + moddir + "/" + target_dir + " to "
+                             + moddir + "/" + "@" + displayname)
                 os.rename(moddir + "/" + target_dir,
                           moddir + "/" + "@" + displayname)
                 os.remove(savedfile)  # Remove .zip file
@@ -211,12 +207,12 @@ def main():
                         line = line.replace(old_line, new_line)
                     sys.stdout.write(line)
 
-                printstatus(2, displayname)
+                output.printstatus(2, displayname)
             # Github
             if mod[0] == "github" and github_enabled:
                 displayname = mod[1]
                 github_loc = mod[2]
-                printstatus(0, displayname)
+                output.printstatus(0, displayname)
                 if os.path.isdir(displayname):
                     modrepo = git.Repo(displayname)
                     count = sum(1 for c in
@@ -226,7 +222,7 @@ def main():
                         modrepo.remotes.origin.pull()
                     elif not args.skip_version:
                         # No update needed
-                        printstatus(1, displayname)
+                        output.printstatus(1, displayname)
                         continue
                 else:
                     modrepo = git.Repo.clone_from("https://github.com/" +
@@ -235,16 +231,16 @@ def main():
                     for mod_file in glob.glob(displayname + r"/@*"):
                         shutil.move(mod_file, moddir + "/" + displayname)
 
-                printstatus(2, displayname)
+                output.printstatus(2, displayname)
             # ace_optionals
             if mod[0] == "ace_optionals" and ace_optionals_enabled:
                 ace_optional_files.append(mod[1])
-                printstatus(4, mod[1])
+                output.printstatus(4, mod[1])
             # Steam Workshop
             if mod[0] == "steam" and workshop_enabled:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
-                printstatus(3, mod[1])
+                output.printstatus(3, mod[1])
             if mod[0] == "curl_biggest_zip" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
@@ -252,7 +248,7 @@ def main():
                 new_version = str()
                 savedfile = displayname + ".zip"
 
-                printstatus(0, displayname)
+                output.printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
                     versions = list()
@@ -265,14 +261,14 @@ def main():
                     new_version = versions[0]
                 download(os.path.join(url, new_version), savedfile)
                 if not zipfile.is_zipfile(savedfile):
-                    printstatus(-1, displayname)
+                    output.printstatus(-1, displayname)
                     continue
                 target_dir = str()
                 with zipfile.ZipFile(savedfile, "r") as packed:
                     for zipinfo in packed.namelist():
                         target_dir = packed.extract(zipinfo, moddir)
                 os.remove(savedfile)
-                printstatus(2, displayname)
+                output.printstatus(2, displayname)
             if mod[0] == "curl_biggest_rar" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
@@ -280,7 +276,7 @@ def main():
                 new_version = str()
                 savedfile = displayname + ".rar"
 
-                printstatus(0, displayname)
+                output.printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
                 output.debug("looking for" + curl_version)
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
@@ -296,21 +292,21 @@ def main():
                 download(os.path.join(url, new_version), savedfile)
                 Archive(savedfile).extractall(moddir)
                 os.remove(savedfile)
-                printstatus(2, displayname)
+                output.printstatus(2, displayname)
             if mod[0] == "curl_folder" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
                 path = mod[2].split("//")[1]
-                printstatus(0, displayname)
+                output.printstatus(0, displayname)
                 if path.endswith("/"):
                     path = path[:-1]
                 os.system("wget -qq -r " + url)
-                output.debug("copytree " + path + " --> " + moddir + "/" +
-                      "@" + displayname)
+                output.debug("copytree " + path + " --> " + moddir + "/"
+                             + "@" + displayname)
                 distutils.dir_util.copy_tree(path, moddir + "/" +
                                              "@" + displayname)
                 shutil.rmtree(path)
-                printstatus(2, displayname)
+                output.printstatus(2, displayname)
 
             # update loop done
         # loop done
@@ -326,7 +322,7 @@ def main():
         while is_failed:
             is_failed = False
             with open("/tmp/steambag.tmp", "wb") as steambag:
-                printstatus(5)
+                output.printstatus(5)
                 login = input("Login: ")
                 passwd = getpass.getpass()
                 steamguard = input("Steam Guard Code: ")
@@ -372,20 +368,21 @@ def main():
 
             for i in range(len(workshop_ids)):
                 if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
-                    printstatus(-2, workshop_names[i])
-                    printstatus(-3, workshop_ids[i])
+                    output.printstatus(-2, workshop_names[i])
+                    output.printstatus(-3, workshop_ids[i])
                     is_failed = True
                     continue
                 if os.path.islink(moddir + "/@" + workshop_names[i]):
-                    printstatus(6, moddir + "/@" + workshop_names[i])
+                    output.printstatus(6, moddir + "/@" + workshop_names[i])
                     continue
 
-                output.debug("create symlink " + moddir + "/@" + workshop_names[i] +
-                      " -> " + steamdownload + "/" + workshop_ids[i])
+                output.debug("create symlink " + moddir + "/@"
+                             + workshop_names[i] + " -> " + steamdownload
+                             + "/" + workshop_ids[i])
                 os.symlink(steamdownload + "/" + workshop_ids[i],
                            moddir + "/@" + workshop_names[i])
-                printstatus(2, workshop_names[i])
-            printstatus(2, "Steam Workshop")
+                output.printstatus(2, workshop_names[i])
+            output.printstatus(2, "Steam Workshop")
             if is_failed:
                 sys.stdout.write("Workshop Update seems to have failed.")
                 out = input("Try Again? (y/N)")
@@ -405,22 +402,22 @@ def main():
             for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
                 output.debug("found " + file)
                 if os.path.isdir(file):
-                    output.debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" +
-                          os.path.basename(file))
+                    output.debug("copy " + file + " to "
+                                 + moddir + "/@ace_optionals/addons/"
+                                 + os.path.basename(file))
                     shutil.copytree(file,
                                     moddir + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
-                    output.debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" +
-                          os.path.basename(file))
+                    output.debug("copy " + file + " to "
+                                 + moddir + "/@ace_optionals/addons/"
+                                 + os.path.basename(file))
                     shutil.copy(file,
                                 moddir + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
                 else:
-                    printstatus(-2, file)
-        printstatus(2, "@ace_optionals")
+                    output.printstatus(-2, file)
+        output.printstatus(2, "@ace_optionals")
     # make apache like our downloads
     if args.update:
         for root, _, _ in os.walk(moddir):
