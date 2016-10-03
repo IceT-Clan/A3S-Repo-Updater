@@ -58,7 +58,7 @@ def main():
     group.add_argument("-u", "--update", action="store_true",
                        help="Update repository")
 
-    parser.add_argument("--security", type=int, default=1,
+    parser.add_argument("--security", type=int, default=2,
                         help="set security level")
     parser.add_argument("--ignore-version", action="store_true",
                         help="ignore version checking", dest="skip_version")
