@@ -38,8 +38,12 @@ class Output:
                              + " will be added to @ace_optinals" + "\n")
         elif state == "do_workshop":
             sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_YELLOW + "WAIT"
-                             + self.ansi_escape.RESET + " ] " +
+                             + self.ansi_escape.RESET + " ] "
                              + "doing Steam Workshop" + "\n")
+        elif state == "linking":
+            sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_YELLOW + "WAIT"
+                             + self.ansi_escape.RESET + " ] "
+                             + "linking " + displayname + "\n")
         elif state == "is_linked":
             sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_BLUE + "SKIP"
                              + self.ansi_escape.RESET + " ] " + displayname

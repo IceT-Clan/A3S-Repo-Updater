@@ -25,22 +25,23 @@ import console
 
 
 def download(url, file_name, new_line=False):
-    """download <url> to <file_name>"""
+    """download <URL> to <file_name>"""
     console.Output.debug("download " + url + " as " + file_name, new_line)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
 
-def update(output, dirs, enabled_sources, **kwargs):
+def update(output, dirs, enabled_sources, mod, **kwargs):
     # Manual downloaded Mods
     if mod[0] == "manual":
         displayname = mod[1]
         file_name = mod[2]
-        if not os.path.islink(moddir + "/@" + displayname):
-            os.symlink(manual_location + "/" + file_name,
-                       moddir + "/@" + displayname)
+        output.printstatus("linking", displayname)
+        if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            os.symlink(dirs["manual"] + "/" + file_name,
+                       dirs["repo"] + "/@" + displayname)
     # Github Release
-    if mod[0] == "github-release" and github_enabled:
+    if mod[0] == "github-release" and enabled_sources["github"]:
         displayname = mod[1]
         github_loc = mod[2]
         file_format = mod[3]
@@ -66,7 +67,7 @@ def update(output, dirs, enabled_sources, **kwargs):
         if new_tag == cur_version and not args.skip_version:
             # No update needed
             output.printstatus(1, displayname)
-            continue
+            return
 
         # Remove old Mod
         if os.path.isdir(os.path.join(moddir, "@" + displayname)):
@@ -82,8 +83,7 @@ def update(output, dirs, enabled_sources, **kwargs):
 
         if not zipfile.is_zipfile(savedfile):
             output.printstatus(-1, displayname)
-            continue
-        target_dir = str()
+            return
         with zipfile.ZipFile(savedfile, "r") as packed:
             for zipinfo in packed.namelist():
                 target_dir = packed.extract(zipinfo, moddir)
@@ -119,7 +119,7 @@ def update(output, dirs, enabled_sources, **kwargs):
             elif not args.skip_version:
                 # No update needed
                 output.printstatus(1, displayname)
-                continue
+                return
         else:
             modrepo = git.Repo.clone_from("https://github.com/" +
                                           github_loc + ".git",
@@ -128,15 +128,6 @@ def update(output, dirs, enabled_sources, **kwargs):
                 shutil.move(mod_file, moddir + "/" + displayname)
 
         output.printstatus(2, displayname)
-    # ace_optionals
-    if mod[0] == "ace_optionals" and ace_optionals_enabled:
-        ace_optional_files.append(mod[1])
-        output.printstatus(4, mod[1])
-    # Steam Workshop
-    if mod[0] == "steam" and workshop_enabled:
-        workshop_names.append(mod[1])
-        workshop_ids.append(mod[2])
-        output.printstatus(3, mod[1])
     if mod[0] == "curl_biggest_zip" and curl_enabled:
         displayname = mod[1]
         url = mod[2]
@@ -158,7 +149,7 @@ def update(output, dirs, enabled_sources, **kwargs):
         download(os.path.join(url, new_version), savedfile)
         if not zipfile.is_zipfile(savedfile):
             output.printstatus(-1, displayname)
-            continue
+            return
         target_dir = str()
         with zipfile.ZipFile(savedfile, "r") as packed:
             for zipinfo in packed.namelist():
@@ -205,7 +196,7 @@ def update(output, dirs, enabled_sources, **kwargs):
         output.printstatus(2, displayname)
 
 
-def get_sources(output, args):
+def get_sources(args):
     """get all source flags from args and return as dict"""
     enabled_sources = {"github": True,
                        "workshop": True,
@@ -248,12 +239,31 @@ def get_dirs(output, modlist):
             continue
     return dirs
 
+def rm_all_symlinks(directory):
+    """remove all symlinks in directory"""
+    for root, dirs, files in os.walk(directory):
+        if root.startswith("."):
+            # Ignore hidden directorys
+            continue
+        for filename in files:
+            path = os.path.join(root, filename)
+            if os.path.islink(path):
+                os.unlink(path)
+            else:
+                # If it's not a symlink we're not interested.
+                continue
+        for dirname in dirs:
+            path = os.path.join(root, dirname)
+            if os.path.islink(path):
+                os.unlink(path)
+            else:
+                # If it's not a symlink we're not interested.
+                continue
+
+
 
 def main():
     """main"""
-    workshop_ids = list()
-    workshop_names = list()
-    ace_optional_files = list()
     ansi_escape = EscapeAnsi.EscapeAnsi()
 
     # Command line argument setup
@@ -308,7 +318,7 @@ def main():
 
     output.debug(args)
 
-    enabled_sources = get_sources(output, args)
+    enabled_sources = get_sources(args)
 
     # Read existing config
     modlist = list()
@@ -320,9 +330,23 @@ def main():
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)
+
+    workshop_ids = list()
+    workshop_names = list()
+    ace_optional_files = list()
     for mod in modlist:
         if args.update:
-            update(output, dirs, enabled_sources)
+            rm_all_symlinks(dirs["repo"])
+            update(output, dirs, enabled_sources, mod)
+            # ace_optionals
+            if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
+                ace_optional_files.append(mod[1])
+                output.printstatus(4, mod[1])
+            # Steam Workshop
+            if mod[0] == "steam" and enabled_sources["workshop"]:
+                workshop_names.append(mod[1])
+                workshop_ids.append(mod[2])
+                output.printstatus(3, mod[1])
 
     # Steam Workshop
     if args.workshop_reset:
@@ -356,7 +380,8 @@ def main():
                     output.debug("wrote " + workshop_id + " to steambag")
                 steambag.write("quit")
 
-            output.debug("run \'" + dirs["steamcmd"] + " +runscript /tmp/steambag.tmp\'")
+            output.debug("run \'" + dirs["steamcmd"]
+                         + " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
                 sys.stdout.write("\rHide Text for security reasons." +
                                  "THX VOLVO! (disable with --security 0)" +
@@ -367,27 +392,31 @@ def main():
                 output.debug("redirect steam output to /dev/null")
                 sys.stdout.write("\rVoiding Steam Output.\n" +
                                  "\tWARNING! This is of no means safe!\n")
-                os.system("bash " + dirs["steamcmd"] + " +runscript /tmp/steambag.tmp" +
-                          ">> /dev/null")
+                os.system("bash " + dirs["steamcmd"]
+                          + " +runscript /tmp/steambag.tmp" + ">> /dev/null")
             else:
-                os.system("bash " + dirs["steamcmd"] + " +runscript /tmp/steambag.tmp")
+                os.system("bash " + dirs["steamcmd"]
+                          + " +runscript /tmp/steambag.tmp")
 
             sys.stdout.write(ansi_escape.HIDDEN_OFF)
             output.debug("remove steambag")
             os.remove("/tmp/steambag.tmp")
 
             for i in range(len(workshop_ids)):
-                if not os.path.isdir(dirs["steamdownload"] + "/" + workshop_ids[i]):
-                    output.printstatus(-2, workshop_names[i])
-                    output.printstatus(-3, workshop_ids[i])
+                if not os.path.isdir(dirs["steamdownload"] + "/"
+                                     + workshop_ids[i]):
+                    output.printstatus("err_not_exist", workshop_names[i])
+                    output.printstatus("err_steam", workshop_ids[i])
                     is_failed = True
                     continue
                 if os.path.islink(dirs["repo"] + "/@" + workshop_names[i]):
-                    output.printstatus(6, dirs["repo"] + "/@" + workshop_names[i])
+                    output.printstatus("is_linked", dirs["repo"] + "/@"
+                                       + workshop_names[i])
                     continue
 
                 output.debug("create symlink " + dirs["repo"] + "/@"
-                             + workshop_names[i] + " -> " + dirs["steamdownload"]
+                             + workshop_names[i] + " -> "
+                             + dirs["steamdownload"]
                              + "/" + workshop_ids[i])
                 os.symlink(dirs["steamdownload"] + "/" + workshop_ids[i],
                            dirs["repo"] + "/@" + workshop_names[i])
@@ -403,33 +432,36 @@ def main():
 
     # ace_optionals
     if args.update and enabled_sources["ace_optionals"]:
-        if os.path.isdir(dirs["moddir"] + "/@ace_optionals"):
+        if os.path.isdir(dirs["mods"] + "/@ace_optionals"):
             output.debug("existing @ace_optionals found. removing old files")
-            shutil.rmtree(dirs["moddir"] + "/@ace_optionals")
-        os.makedirs(dirs["moddir"] + "/@ace_optionals/addons")
+            shutil.rmtree(dirs["mods"] + "/@ace_optionals")
+        os.makedirs(dirs["mods"] + "/@ace_optionals/addons")
         for mod in ace_optional_files:
-            output.debug("looking for " + dirs["moddir"] + "/@ACE3/optionals/*" + mod + "*")
-            for file in glob.glob(dirs["moddir"] + "/@ACE3/optionals/*" + mod + "*"):
+            output.debug("looking for " + dirs["mods"] + "/@ACE3/optionals/*"
+                         + mod + "*")
+            for file in glob.glob(dirs["mods"] + "/@ACE3/optionals/*"
+                                  + mod + "*"):
                 output.debug("found " + file)
                 if os.path.isdir(file):
                     output.debug("copy " + file + " to "
-                                 + dirs["moddir"] + "/@ace_optionals/addons/"
+                                 + dirs["mods"] + "/@ace_optionals/addons/"
                                  + os.path.basename(file))
                     shutil.copytree(file,
-                                    dirs["moddir"] + "/@ace_optionals/addons/" +
+                                    dirs["mods"] + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
                     output.debug("copy " + file + " to "
-                                 + dirs["moddir"] + "/@ace_optionals/addons/"
+                                 + dirs["mods"] + "/@ace_optionals/addons/"
                                  + os.path.basename(file))
                     shutil.copy(file,
-                                dirs["moddir"] + "/@ace_optionals/addons/" +
+                                dirs["mods"] + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
                 else:
-                    output.printstatus(-2, file)
-        output.printstatus(2, "@ace_optionals")
+                    output.printstatus("err_not_exist", file)
+        output.printstatus("success_update", "@ace_optionals")
+
     # make apache like our mods
-    if args.update:
+    if args.update and False:
         for root, _, _ in os.walk(dirs["moddir"]):
             if not root == ".a3s":
                 os.chmod(root, 0o755)
