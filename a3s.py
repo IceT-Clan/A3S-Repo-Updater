@@ -101,9 +101,9 @@ class VT100Formats:
         return self.B_COLOR_INIT + color_number + 'm'
 
 
-def download(url, file_name):
+def download(url, file_name, new_line = False):
     """download url to file_name"""
-    debug("download " + url + " as " + file_name, True)
+    debug("download " + url + " as " + file_name, new_line)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
@@ -159,7 +159,7 @@ def printstatus(state, displayname="NO DISPLAY NAME"):
                          + VT100Formats.RESET + " ] " + displayname +
                          " is not a valid RAR-Archive" + "\n")
 
-
+is_debug = False
 def debug(msg, add_newline=False):
     """print debug messages"""
     if add_newline:
@@ -221,6 +221,7 @@ def main():
         parser.print_help()
         sys.exit(2)
 
+    global is_debug
     is_debug = args.debug
     debug("enabled")
 
@@ -233,9 +234,11 @@ def main():
     github_enabled = True
     workshop_enabled = True
     ace_optionals_enabled = True
+    curl_enabled = True
     if args.workshop_only:
         github_enabled = False
         ace_optionals_enabled = False
+        curl_enabled = False
     if args.no_workshop:
         workshop_enabled = False
     if args.no_github:
@@ -264,7 +267,17 @@ def main():
             debug("steamcmd:" + steamcmd +
                   " steamdownload:" + steamdownload)
             continue
+        if mod[0] == "manual_location":
+            manual_location = mod[1]
+            debug("Manual mods:" + manual_location)
         if args.update:
+            # Manual downloaded Mods
+            if mod[0] == "manual":
+                displayname = mod[1]
+                file_name = mod[2]
+                if not os.path.islink(moddir + "/@" + displayname):
+                    os.symlink(manual_location + "/" + file_name,
+                               moddir + "/@" + displayname)
             # Github Release
             if mod[0] == "github-release" and github_enabled:
                 displayname = mod[1]
@@ -281,7 +294,14 @@ def main():
                                                   displayname)
 
                 # Check if an update is available
-                new_tag = str(modrepo.tags[-1])
+                #new_tag = str(modrepo.git.tag(l=True))
+                new_tag = subprocess.check_output(["git", "-C",
+                                                   displayname,
+                                                   "describe",
+                                                   "--abbrev=0",
+                                                   "--tags"])
+                new_tag = new_tag.decode("UTF-8")
+                new_tag = new_tag[:-1]
                 new_version = new_tag
                 if new_tag.startswith("v"):
                     new_version = new_tag[1:]
@@ -303,7 +323,7 @@ def main():
                                      "/releases/download/" + new_tag + "/"
                                      + zipname + " as " + savedfile)"""
                 download("https://github.com/" + github_loc +
-                         "/archive/" + new_tag + "/" + zipname,
+                         "/releases/download/" + new_tag + "/" + zipname,
                          savedfile)
 
                 if not zipfile.is_zipfile(savedfile):
@@ -363,11 +383,10 @@ def main():
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
                 printstatus(3, mod[1])
-            if mod[0] == "curl_biggest_zip":
+            if mod[0] == "curl_biggest_zip" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
                 curl_version = mod[3]
-                current_version = mod[4]
                 new_version = str()
                 savedfile = displayname + ".zip"
 
@@ -380,12 +399,8 @@ def main():
                         if line:
                             line = line[0].split('"')[0]
                             versions.append(line)
-                    versions.append(current_version)
                     versions.sort(reverse=True)
                     new_version = versions[0]
-                if current_version == new_version and not args.skip_version:
-                    printstatus(1, displayname)
-                    continue
                 download(os.path.join(url, new_version), savedfile)
                 if not zipfile.is_zipfile(savedfile):
                     printstatus(-1, displayname)
@@ -395,24 +410,17 @@ def main():
                     for zipinfo in packed.namelist():
                         target_dir = packed.extract(zipinfo, moddir)
                 os.remove(savedfile)
-
-                old_line = ",".join([str(x) for x in mod])
-                new_line = old_line.replace(current_version, new_version)
-                for line in fileinput.input("repo.cfg", inplace=1):
-                    if old_line in line:
-                        line = line.replace(old_line, new_line)
-                    sys.stdout.write(line)
                 printstatus(2, displayname)
-            if mod[0] == "curl_biggest_rar":
+            if mod[0] == "curl_biggest_rar" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
                 curl_version = mod[3]
-                current_version = mod[4]
                 new_version = str()
                 savedfile = displayname + ".rar"
 
                 printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
+                debug("looking for" + curl_version)
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
                     versions = list()
                     for line in page:
@@ -420,63 +428,16 @@ def main():
                         if line:
                             line = line[0].split('"')[0]
                             versions.append(line)
-                    versions.append(current_version)
                     versions.sort(reverse=True)
                     new_version = versions[0]
-                if current_version == new_version and not args.skip_version:
-                    debug(current_version + " == " + new_version)
-                    printstatus(1, displayname)
-                    continue
+                    debug("found version: " + new_version)
                 download(os.path.join(url, new_version), savedfile)
                 Archive(savedfile).extractall(moddir)
                 os.remove(savedfile)
-
-                old_line = ",".join([str(x) for x in mod])
-                new_line = old_line.replace(current_version, new_version)
-                for line in fileinput.input("repo.cfg", inplace=1):
-                    if old_line in line:
-                        line = line.replace(old_line, new_line)
-                    sys.stdout.write(line)
                 printstatus(2, displayname)
-            if mod[0] == "ftp_curl_biggest_torrent":
-                displayname = mod[1]
-                server = mod[2]
-                target_dir = mod[3]
-                curl_version = mod[4]
-                current_version = mod[5]
-                new_version = str()
-                savedfile = displayname + ".torrent"
-
-                printstatus(0, displayname)
-                with FTP(server) as ftp:
-                    ftp.login()
-                    ftp.cwd(target_dir)
-                    # lines = ftp.nlst()
-                    lines = list()
-                    ftp.dir('-t', lines.append)
-                    ver_begin_i = curl_version.find("$version")
-                    ver_bef = curl_version[:ver_begin_i]
-                    ver_end_i = curl_version.find("$version") + len("$version")
-                    ver_aftr = curl_version[ver_end_i:]
-                    ver_bef_i = lines[0].find(ver_bef) + len(ver_bef)
-                    ver_aftr_i = lines[0].find(ver_aftr)
-                    lines[0] = lines[0][ver_bef_i:ver_aftr_i]
-                    new_version = lines[0]
-                    complete_file = curl_version.replace("$version",
-                                                         new_version)
-
-                    debug("send 'RETR %s" % complete_file + "' from '" +
-                          target_dir + "' to '" + server +
-                          "' and save answer to '" + savedfile + "'",
-                          True)
-                    ftp.retrbinary("RETR %s" % complete_file,
-                                   open(savedfile, 'wb').write)
-                # download torrent from savedfile
-                os.system("python2 torrent.py " + savedfile + " ./")
-            if mod[0] == "curl_folder":
+            if mod[0] == "curl_folder" and curl_enabled:
                 displayname = mod[1]
                 url = mod[2]
-                # path = mod[3]
                 path = mod[2].split("//")[1]
                 printstatus(0, displayname)
                 if path.endswith("/"):
@@ -486,13 +447,7 @@ def main():
                       "@" + displayname)
                 distutils.dir_util.copy_tree(path, moddir + "/" +
                                              "@" + displayname)
-                #                             path.split("/")[-1])
                 shutil.rmtree(path)
-                """shutil.move(moddir + "/" + path.split("/")[-1],
-                            moddir + "/" + "@" + displayname)"""
-                """subprocess.Popen(["mv", moddir + "/" + path.split("/")[-1],
-                                moddir + "/" + "@" + displayname],
-                                stdout=subprocess.PIPE)"""
                 printstatus(2, displayname)
 
             # update loop done
@@ -505,66 +460,77 @@ def main():
                   "workshop/appworkshop_107410.acf")  # make path relative
 
     if args.update and workshop_enabled:
-        with open("/tmp/steambag.tmp", "wb") as steambag:
-            printstatus(5)
-            login = input("Login: ")
-            passwd = getpass.getpass()
-            steamguard = input("Steam Guard Code: ")
+        is_failed = True
+        while is_failed:
+            is_failed = False
+            with open("/tmp/steambag.tmp", "wb") as steambag:
+                printstatus(5)
+                login = input("Login: ")
+                passwd = getpass.getpass()
+                steamguard = input("Steam Guard Code: ")
 
-            steambag.write(bytes("login " + login + " " + passwd +
-                                 " " + steamguard + "\n", 'UTF-8'))
+                steambag.write(bytes("login " + login + " " + passwd +
+                                     " " + steamguard + "\n", 'UTF-8'))
 
-            CURSOR_UP_ONE = '\x1b[1A'
-            ERASE_LINE = '\x1b[2K'
-            for i in range(3):  # remove written stuff
-                print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
-            # test if bytes can be removed
-            steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
-            steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
-            steambag.write(bytes("DepotDownloadProgressTimeout 90000\n",
-                                 'UTF-8'))
-            for workshop_id in workshop_ids:
-                steambag.write(bytes("workshop_download_item 107410 " +
-                                     workshop_id + " validate" + "\n",
+                CURSOR_UP_ONE = '\x1b[1A'
+                ERASE_LINE = '\x1b[2K'
+                for i in range(3):  # remove written stuff
+                    print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
+                # test if bytes can be removed
+                steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
+                steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
+                steambag.write(bytes("DepotDownloadProgressTimeout 90000\n",
                                      'UTF-8'))
-                debug("wrote " + workshop_id + " to steambag")
-            steambag.write(bytes("quit", 'UTF-8'))
+                for workshop_id in workshop_ids:
+                    steambag.write(bytes("workshop_download_item 107410 " +
+                                         workshop_id + " validate" + "\n",
+                                         'UTF-8'))
+                    debug("wrote " + workshop_id + " to steambag")
+                steambag.write(bytes("quit", 'UTF-8'))
 
-        debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
-        if args.security == 1:
-            sys.stdout.write("\rHide Text for security reasons. THX VOLVO! " +
-                             "(disable with --security 0)" +
-                             VT100Formats.HIDDEN + "\n")
-            sys.stdout.write("\rThis does not seem to be working. " +
-                             "Please use --security 2 instead\n")
-        if args.security == 2:
-            debug("redir steam output to /dev/null")
-            sys.stdout.write("\rVoiding Steam Output.\n" +
-                             "\tWARNING! This is of no means safe!\n")
-            os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp" +
-                      ">> /dev/null")
-        else:
-            os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
+            debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
+            if args.security == 1:
+                sys.stdout.write("\rHide Text for security reasons." +
+                                 "THX VOLVO! (disable with --security 0)" +
+                                 VT100Formats.HIDDEN + "\n")
+                sys.stdout.write("\rThis does not seem to be working. " +
+                                 "Please use --security 2 instead\n")
+            if args.security == 2:
+                debug("redir steam output to /dev/null")
+                sys.stdout.write("\rVoiding Steam Output.\n" +
+                                 "\tWARNING! This is of no means safe!\n")
+                os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp" +
+                          ">> /dev/null")
+            else:
+                os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
 
-        sys.stdout.write(VT100Formats.HIDDEN_OFF)
-        debug("remove steambag")
-        os.remove("/tmp/steambag.tmp")
+            sys.stdout.write(VT100Formats.HIDDEN_OFF)
+            debug("remove steambag")
+            os.remove("/tmp/steambag.tmp")
 
-        for i in range(len(workshop_ids)):
-            if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
-                printstatus(-2, workshop_names[i])
-                printstatus(-3, workshop_ids[i])
-                continue
-            if os.path.islink(moddir + "/@" + workshop_names[i]):
-                printstatus(6, moddir + "/@" + workshop_names[i])
-                continue
+            for i in range(len(workshop_ids)):
+                if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
+                    printstatus(-2, workshop_names[i])
+                    printstatus(-3, workshop_ids[i])
+                    is_failed = True
+                    continue
+                if os.path.islink(moddir + "/@" + workshop_names[i]):
+                    printstatus(6, moddir + "/@" + workshop_names[i])
+                    continue
 
-            debug("create symlink " + moddir + "/@" + workshop_names[i] +
-                  " -> " + steamdownload + "/" + workshop_ids[i])
-            os.symlink(steamdownload + "/" + workshop_ids[i],
-                       moddir + "/@" + workshop_names[i])
-            printstatus(2, workshop_names[i])
-        printstatus(2, "Steam Workshop")
+                debug("create symlink " + moddir + "/@" + workshop_names[i] +
+                      " -> " + steamdownload + "/" + workshop_ids[i])
+                os.symlink(steamdownload + "/" + workshop_ids[i],
+                           moddir + "/@" + workshop_names[i])
+                printstatus(2, workshop_names[i])
+            printstatus(2, "Steam Workshop")
+            if is_failed:
+                sys.stdout.write("Workshop Update seems to have failed.")
+                out = input("Try Again? (y/N)")
+                if out.upper() == "Y":
+                    is_failed = False
+
+
 
     # ace_optionals
     if args.update and ace_optionals_enabled:
@@ -593,8 +559,12 @@ def main():
                 else:
                     printstatus(-2, file)
         printstatus(2, "@ace_optionals")
-
-    return
+    # make apache like our downloads
+    if args.update:
+        for root, _, _ in os.walk(moddir):
+            if not root == ".a3s":
+                os.chmod(root, 0o755)
+        return
 
 
 if __name__ == "__main__":
