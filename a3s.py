@@ -354,7 +354,7 @@ def main():
                     steambag.write("workshop_download_item 107410 "
                                    + workshop_id + " validate" + "\n")
                     output.debug("wrote " + workshop_id + " to steambag")
-                steambag.write("quit"
+                steambag.write("quit")
 
             output.debug("run \'" + dirs["steamcmd"] + " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
@@ -383,7 +383,7 @@ def main():
                     is_failed = True
                     continue
                 if os.path.islink(dirs["repo"] + "/@" + workshop_names[i]):
-                    output.printstatus(6, moddir + "/@" + workshop_names[i])
+                    output.printstatus(6, dirs["repo"] + "/@" + workshop_names[i])
                     continue
 
                 output.debug("create symlink " + dirs["repo"] + "/@"
@@ -403,34 +403,34 @@ def main():
 
     # ace_optionals
     if args.update and enabled_sources["ace_optionals"]:
-        if os.path.isdir(moddir + "/@ace_optionals"):
+        if os.path.isdir(dirs["moddir"] + "/@ace_optionals"):
             output.debug("existing @ace_optionals found. removing old files")
-            shutil.rmtree(moddir + "/@ace_optionals")
-        os.makedirs(moddir + "/@ace_optionals/addons")
+            shutil.rmtree(dirs["moddir"] + "/@ace_optionals")
+        os.makedirs(dirs["moddir"] + "/@ace_optionals/addons")
         for mod in ace_optional_files:
-            output.debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
-            for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
+            output.debug("looking for " + dirs["moddir"] + "/@ACE3/optionals/*" + mod + "*")
+            for file in glob.glob(dirs["moddir"] + "/@ACE3/optionals/*" + mod + "*"):
                 output.debug("found " + file)
                 if os.path.isdir(file):
                     output.debug("copy " + file + " to "
-                                 + moddir + "/@ace_optionals/addons/"
+                                 + dirs["moddir"] + "/@ace_optionals/addons/"
                                  + os.path.basename(file))
                     shutil.copytree(file,
-                                    moddir + "/@ace_optionals/addons/" +
+                                    dirs["moddir"] + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
                     output.debug("copy " + file + " to "
-                                 + moddir + "/@ace_optionals/addons/"
+                                 + dirs["moddir"] + "/@ace_optionals/addons/"
                                  + os.path.basename(file))
                     shutil.copy(file,
-                                moddir + "/@ace_optionals/addons/" +
+                                dirs["moddir"] + "/@ace_optionals/addons/" +
                                 os.path.basename(file))
                 else:
                     output.printstatus(-2, file)
         output.printstatus(2, "@ace_optionals")
-    # make apache like our downloads
+    # make apache like our mods
     if args.update:
-        for root, _, _ in os.walk(moddir):
+        for root, _, _ in os.walk(dirs["moddir"]):
             if not root == ".a3s":
                 os.chmod(root, 0o755)
         return
