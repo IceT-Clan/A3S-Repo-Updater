@@ -402,7 +402,7 @@ def main():
             output.debug("remove steambag")
             os.remove("/tmp/steambag.tmp")
 
-            for i in range(len(workshop_ids)):
+            for i, _ in enumerate(workshop_ids):
                 if not os.path.isdir(dirs["steamdownload"] + "/"
                                      + workshop_ids[i]):
                     output.printstatus("err_not_exist", workshop_names[i])
