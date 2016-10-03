@@ -1,4 +1,4 @@
-class console:
+class Output:
     """docstring for console"""
     def __init__(self, is_debug=False):
         super(console, self).__init__()

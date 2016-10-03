@@ -3,7 +3,7 @@
 
 import argparse
 import fileinput
-import git
+#from ftplib import FTP
 import glob
 import os
 import shutil
@@ -13,17 +13,19 @@ import getpass
 import re
 import subprocess
 import distutils.dir_util
+import git
 
 from pyunpack import Archive
 from requests import get
-from ftplib import FTP
+
+import EscapeAnsi
+import console
 
 
 
-
-def download(url, file_name, new_line = False):
-    """download url to file_name"""
-    debug("download " + url + " as " + file_name, new_line)
+def download(url, file_name, new_line=False):
+    """download <url> to <file_name>"""
+    console.Output.debug("download " + url + " as " + file_name, new_line)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
@@ -43,8 +45,8 @@ def main():
 
     parser.add_argument("-v", "--version",
                         action="version", version='%(prog)s 0.2.0')
-    parser.add_argument("-d", "--debug",
-                        help="enable debug",
+    parser.add_argument("-d", "--output.debug",
+                        help="enable output.debug",
                         action="store_true")
 
     group.add_argument("-a", "--add", action="store_true",
@@ -81,15 +83,15 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    global is_debug
+
     is_debug = args.debug
-    debug("enabled")
+    output = console.Output(is_debug)
+    output.debug("enabled")
 
     if args.security > 2:
         args.security = 2
 
-    if is_debug:
-        debug(args)
+    output.debug(args)
 
     github_enabled = True
     workshop_enabled = True
@@ -119,17 +121,17 @@ def main():
     for mod in modlist:
         if mod[0] == "repolocation":
             moddir = mod[1]
-            debug("Repo:" + moddir)
+            output.debug("Repo:" + moddir)
             continue
         if mod[0] == "steamcmd":
             steamcmd = mod[1]
             steamdownload = mod[2]
-            debug("steamcmd:" + steamcmd +
-                  " steamdownload:" + steamdownload)
+            output.debug("steamcmd:" + steamcmd +
+                         " steamdownload:" + steamdownload)
             continue
         if mod[0] == "manual_location":
             manual_location = mod[1]
-            debug("Manual mods:" + manual_location)
+            output.debug("Manual mods:" + manual_location)
         if args.update:
             # Manual downloaded Mods
             if mod[0] == "manual":
@@ -177,8 +179,8 @@ def main():
                 # Download newest version
                 zipname = file_format.replace("$version", new_version)
                 savedfile = displayname + ".zip"
-                debug("zipname: " + zipname + "; savedfile: " + savedfile)
-                """if args.debug: debug("download https://github.com/"
+                output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
+                """if args.output.debug: output.debug("download https://github.com/"
                                      + github_loc +
                                      "/releases/download/" + new_tag + "/"
                                      + zipname + " as " + savedfile)"""
@@ -195,7 +197,7 @@ def main():
                         target_dir = packed.extract(zipinfo, moddir)
                 target_dir = target_dir.replace(moddir, '')
                 target_dir = target_dir.split('/')[1]
-                debug("rename " + moddir + "/" + target_dir + " to " +
+                output.debug("rename " + moddir + "/" + target_dir + " to " +
                       moddir + "/" + "@" + displayname)
                 os.rename(moddir + "/" + target_dir,
                           moddir + "/" + "@" + displayname)
@@ -280,7 +282,7 @@ def main():
 
                 printstatus(0, displayname)
                 download(url, "/tmp/" + displayname + ".tmp")
-                debug("looking for" + curl_version)
+                output.debug("looking for" + curl_version)
                 with open("/tmp/" + displayname + ".tmp", "r") as page:
                     versions = list()
                     for line in page:
@@ -290,7 +292,7 @@ def main():
                             versions.append(line)
                     versions.sort(reverse=True)
                     new_version = versions[0]
-                    debug("found version: " + new_version)
+                    output.debug("found version: " + new_version)
                 download(os.path.join(url, new_version), savedfile)
                 Archive(savedfile).extractall(moddir)
                 os.remove(savedfile)
@@ -303,7 +305,7 @@ def main():
                 if path.endswith("/"):
                     path = path[:-1]
                 os.system("wget -qq -r " + url)
-                debug("copytree " + path + " --> " + moddir + "/" +
+                output.debug("copytree " + path + " --> " + moddir + "/" +
                       "@" + displayname)
                 distutils.dir_util.copy_tree(path, moddir + "/" +
                                              "@" + displayname)
@@ -332,10 +334,10 @@ def main():
                 steambag.write(bytes("login " + login + " " + passwd +
                                      " " + steamguard + "\n", 'UTF-8'))
 
-                CURSOR_UP_ONE = '\x1b[1A'
-                ERASE_LINE = '\x1b[2K'
+                cursor_up_one = '\x1b[1A'
+                erase_line = '\x1b[2K'
                 for i in range(3):  # remove written stuff
-                    print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
+                    print(cursor_up_one + erase_line + cursor_up_one)
                 # test if bytes can be removed
                 steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
                 steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
@@ -345,18 +347,18 @@ def main():
                     steambag.write(bytes("workshop_download_item 107410 " +
                                          workshop_id + " validate" + "\n",
                                          'UTF-8'))
-                    debug("wrote " + workshop_id + " to steambag")
+                    output.debug("wrote " + workshop_id + " to steambag")
                 steambag.write(bytes("quit", 'UTF-8'))
 
-            debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
+            output.debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
                 sys.stdout.write("\rHide Text for security reasons." +
                                  "THX VOLVO! (disable with --security 0)" +
-                                 VT100Formats.HIDDEN + "\n")
+                                 ansi_escape.HIDDEN + "\n")
                 sys.stdout.write("\rThis does not seem to be working. " +
                                  "Please use --security 2 instead\n")
             if args.security == 2:
-                debug("redir steam output to /dev/null")
+                output.debug("redir steam output to /dev/null")
                 sys.stdout.write("\rVoiding Steam Output.\n" +
                                  "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp" +
@@ -364,8 +366,8 @@ def main():
             else:
                 os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
 
-            sys.stdout.write(VT100Formats.HIDDEN_OFF)
-            debug("remove steambag")
+            sys.stdout.write(ansi_escape.HIDDEN_OFF)
+            output.debug("remove steambag")
             os.remove("/tmp/steambag.tmp")
 
             for i in range(len(workshop_ids)):
@@ -378,7 +380,7 @@ def main():
                     printstatus(6, moddir + "/@" + workshop_names[i])
                     continue
 
-                debug("create symlink " + moddir + "/@" + workshop_names[i] +
+                output.debug("create symlink " + moddir + "/@" + workshop_names[i] +
                       " -> " + steamdownload + "/" + workshop_ids[i])
                 os.symlink(steamdownload + "/" + workshop_ids[i],
                            moddir + "/@" + workshop_names[i])
@@ -395,22 +397,22 @@ def main():
     # ace_optionals
     if args.update and ace_optionals_enabled:
         if os.path.isdir(moddir + "/@ace_optionals"):
-            debug("existing @ace_optionals found. removing old files")
+            output.debug("existing @ace_optionals found. removing old files")
             shutil.rmtree(moddir + "/@ace_optionals")
         os.makedirs(moddir + "/@ace_optionals/addons")
         for mod in ace_optional_files:
-            debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
+            output.debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
             for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
-                debug("found " + file)
+                output.debug("found " + file)
                 if os.path.isdir(file):
-                    debug("copy " + file + " to " +
+                    output.debug("copy " + file + " to " +
                           moddir + "/@ace_optionals/addons/" +
                           os.path.basename(file))
                     shutil.copytree(file,
                                     moddir + "/@ace_optionals/addons/" +
                                     os.path.basename(file))
                 elif os.path.isfile(file):
-                    debug("copy " + file + " to " +
+                    output.debug("copy " + file + " to " +
                           moddir + "/@ace_optionals/addons/" +
                           os.path.basename(file))
                     shutil.copy(file,

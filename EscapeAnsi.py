@@ -1,8 +1,7 @@
-
-
-class ansi_escape:
+"""providing EscapeAnsi"""
+class EscapeAnsi:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
-        ANSI/VT100 colors and formats"""
+       ANSI/VT100 colors and formats"""
 
     # formatting
     BOLD = '\033[1m'
