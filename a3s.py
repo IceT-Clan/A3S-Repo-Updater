@@ -83,21 +83,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  savedfile)
 
         # extract <savedfile>
-        # if not zipfile.is_zipfile(savedfile):
-        #     output.printstatus(-1, displayname)
-        #     return
-        # with zipfile.ZipFile(savedfile, "r") as packed:
-        #     for zipinfo in packed.namelist():
-        #         target_dir = packed.extract(zipinfo, dirs["mods"])
         Archive(savedfile).extractall(dirs["mods"])
-
-        # target_dir = target_dir.replace(dirs["mods"], '')
-        # target_dir = target_dir.split('/')[1]
-
-        # output.debug("rename " + dirs["mods"] + "/" + target_dir + " to "
-        #              + dirs["mods"] + "/" + "@" + displayname)
-        # os.rename(dirs["mods"] + "/" + target_dir,
-        #           dirs["mods"] + "/" + "@" + displayname)
 
         # Remove .zip file
         os.remove(savedfile)
@@ -113,13 +99,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
-        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
-        #     output.printstatus("linking", displayname)
-        #     os.symlink(dirs["mods"] + "/@" + displayname,
-        #                dirs["repo"] + "/@" + displayname)
-        # else:
-        #     output.printstatus("is_linked", displayname)
-        # return
+        return
 
     # Github
     if mod[0] == "github" and enabled_sources["github"]:
@@ -148,13 +128,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
-        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
-        #     output.printstatus("linking", displayname)
-        #     os.symlink(dirs["mods"] + "/@" + displayname,
-        #                dirs["repo"] + "/@" + displayname)
-        # else:
-        #     output.printstatus("is_linked", displayname)
-        # return
+        return
 
     # download html file; grep regex; get biggest number;
     #  download found file; extract;
@@ -205,13 +179,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
-        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
-        #     output.printstatus("linking", displayname)
-        #     os.symlink(dirs["mods"] + "/@" + displayname,
-        #                dirs["repo"] + "/@" + displayname)
-        # else:
-        #     output.printstatus("is_linked", displayname)
-        # return
+        return
 
     if mod[0] == "curl_folder" and enabled_sources["curl"]:
         displayname = mod[1]
@@ -233,13 +201,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
        # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
-        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
-        #     output.printstatus("linking", displayname)
-        #     os.symlink(dirs["mods"] + "/@" + displayname,
-        #                dirs["repo"] + "/@" + displayname)
-        # else:
-        #     output.printstatus("is_linked", displayname)
-        # return
+        return
 
 
 def main():
