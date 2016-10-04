@@ -6,7 +6,7 @@ import glob
 import os
 import shutil
 import sys
-import zipfile
+#import zipfile
 import getpass
 import re
 import subprocess
@@ -48,10 +48,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
     if mod[0] == "manual":
         displayname = mod[1]
         file_name = mod[2]
+
         output.printstatus("linking", displayname)
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            output.printstatus("linking", displayname)
             os.symlink(dirs["manual"] + "/" + file_name,
                        dirs["repo"] + "/@" + displayname)
+        else:
+            output.printstatus("is_linked", displayname)
         return
     # Github Release
     if mod[0] == "github-release" and enabled_sources["github"]:
