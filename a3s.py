@@ -49,7 +49,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         github_loc = mod[2]
         file_format = mod[3]
         cur_version = mod[4]
-        output.printstatus(0, displayname)
+
+        output.printstatus("updating", displayname)
         if os.path.isdir(displayname):
             modrepo = git.Repo(displayname)
             modrepo.remotes.origin.pull()
@@ -84,6 +85,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  "/releases/download/" + new_tag + "/" + zipname,
                  savedfile)
 
+        # extract <savedfile>
         if not zipfile.is_zipfile(savedfile):
             output.printstatus(-1, displayname)
             return
@@ -96,7 +98,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                      + dirs["mods"] + "/" + "@" + displayname)
         os.rename(dirs["mods"] + "/" + target_dir,
                   dirs["mods"] + "/" + "@" + displayname)
-        os.remove(savedfile)  # Remove .zip file
+
+        # Remove .zip file
+        os.remove(savedfile)
 
         # Write new version to config
         old_line = ",".join([str(x) for x in mod])
@@ -120,6 +124,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         displayname = mod[1]
         github_loc = mod[2]
         output.printstatus(0, displayname)
+
         if os.path.isdir(displayname):
             modrepo = git.Repo(displayname)
             count = sum(1 for c in
@@ -169,25 +174,23 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             new_version = versions[0]
         download(os.path.join(url, new_version), savedfile)
 
-        # if not zipfile.is_zipfile(savedfile):
-        #     output.printstatus(-1, displayname)
-        #     return
-        # target_dir = str()
-        # with zipfile.ZipFile(savedfile, "r") as packed:
-        #     for zipinfo in packed.namelist():
-        #         target_dir = packed.extract(zipinfo, moddir)
-        # Test if savedfile is a Archive
+        # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
         output.debug("File is :" + header)
+
+        # only continue if file type is an archive
         if "archive" not in header:
             output.printstatus("err_not_valid", file_type="archive",
                                file_name=displayname)
             return
         output.debug("found file type '" + header + "' for file " + savedfile)
+
         if "Java" in header:
             secret.android()
             return
         output.debug("inflating " + savedfile)
+
+        # extract <savedfile> to <dirs["mods"]>
         Archive(savedfile).extractall(dirs["mods"])
 
         # Cleanup
