@@ -64,14 +64,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         new_version = new_tag
         if new_tag.startswith("v"):
             new_version = new_tag[1:]
-        if new_tag == cur_version and not args.skip_version:
+        if new_tag == cur_version and not kwargs["skip_version"]:
             # No update needed
             output.printstatus(1, displayname)
             return
 
         # Remove old Mod
-        if os.path.isdir(os.path.join(moddir, "@" + displayname)):
-            shutil.rmtree(os.path.join(moddir, "@" + displayname))
+        if os.path.isdir(os.path.join(dirs["mods"], "@" + displayname)):
+            shutil.rmtree(os.path.join(dirs["mods"], "@" + displayname))
 
         # Download newest version
         zipname = file_format.replace("$version", new_version)
@@ -86,13 +86,13 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             return
         with zipfile.ZipFile(savedfile, "r") as packed:
             for zipinfo in packed.namelist():
-                target_dir = packed.extract(zipinfo, moddir)
-        target_dir = target_dir.replace(moddir, '')
+                target_dir = packed.extract(zipinfo, dirs["mods"])
+        target_dir = target_dir.replace(dirs["mods"], '')
         target_dir = target_dir.split('/')[1]
-        output.debug("rename " + moddir + "/" + target_dir + " to "
-                     + moddir + "/" + "@" + displayname)
-        os.rename(moddir + "/" + target_dir,
-                  moddir + "/" + "@" + displayname)
+        output.debug("rename " + dirs["mods"] + "/" + target_dir + " to "
+                     + dirs["mods"] + "/" + "@" + displayname)
+        os.rename(dirs["mods"] + "/" + target_dir,
+                  dirs["mods"] + "/" + "@" + displayname)
         os.remove(savedfile)  # Remove .zip file
 
         # Write new version to config
@@ -102,6 +102,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
+
+        # link mod to repo
+        if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            printstatus("linking", displayname)
+            os.symlink(dirs["mods"] + "/@" + displayname,
+                       dirs["repo"] + "/@" + displayname)
+        else:
+            printstatus("is_linked", printstatus)
 
         output.printstatus(2, displayname)
     # Github
@@ -337,7 +345,8 @@ def main():
     for mod in modlist:
         if args.update:
             rm_all_symlinks(dirs["repo"])
-            update(output, dirs, enabled_sources, mod)
+            kargs = {"skip_version":args.skip_version}
+            update(output, dirs, enabled_sources, mod, kwargs=kargs)
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
