@@ -96,19 +96,21 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  savedfile)
 
         # extract <savedfile>
-        if not zipfile.is_zipfile(savedfile):
-            output.printstatus(-1, displayname)
-            return
-        with zipfile.ZipFile(savedfile, "r") as packed:
-            for zipinfo in packed.namelist():
-                target_dir = packed.extract(zipinfo, dirs["mods"])
+        # if not zipfile.is_zipfile(savedfile):
+        #     output.printstatus(-1, displayname)
+        #     return
+        # with zipfile.ZipFile(savedfile, "r") as packed:
+        #     for zipinfo in packed.namelist():
+        #         target_dir = packed.extract(zipinfo, dirs["mods"])
+        Archive(savedfile).extractall(dirs["mods"])
 
-        target_dir = target_dir.replace(dirs["mods"], '')
-        target_dir = target_dir.split('/')[1]
-        output.debug("rename " + dirs["mods"] + "/" + target_dir + " to "
-                     + dirs["mods"] + "/" + "@" + displayname)
-        os.rename(dirs["mods"] + "/" + target_dir,
-                  dirs["mods"] + "/" + "@" + displayname)
+        # target_dir = target_dir.replace(dirs["mods"], '')
+        # target_dir = target_dir.split('/')[1]
+
+        # output.debug("rename " + dirs["mods"] + "/" + target_dir + " to "
+        #              + dirs["mods"] + "/" + "@" + displayname)
+        # os.rename(dirs["mods"] + "/" + target_dir,
+        #           dirs["mods"] + "/" + "@" + displayname)
 
         # Remove .zip file
         os.remove(savedfile)
