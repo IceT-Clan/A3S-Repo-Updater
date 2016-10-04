@@ -139,7 +139,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 shutil.move(mod_file, dirs["mods"] + "/" + displayname)
         output.printstatus(2, displayname)
 
-         # link moddir/@mod to repo/@mod
+        # link moddir/@mod to repo/@mod
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
             output.printstatus("linking", displayname)
             os.symlink(dirs["mods"] + "/@" + displayname,
@@ -183,52 +183,27 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             output.printstatus("err_not_valid", file_type="archive",
                                file_name=displayname)
             return
-        if "Zip" in header:
-            # do zip stuff
-            pass
-        elif "7-zip" in header:
-            # do 7-zip stuff
-            pass
-        elif "RAR" in header:
-            # do rar stuff
-            pass
-        elif "Java" in header:
+        output.debug("found file type '" + header + "' for file " + savedfile)
+        if "Java" in header:
             secret.android()
-
-
-
+            return
+        output.debug("inflating " + savedfile)
+        Archive(savedfile).extractall(dirs["mods"])
 
         # Cleanup
         os.remove("/tmp/" + displayname + ".tmp")
         os.remove(savedfile)
 
         output.printstatus("success_update", displayname)
-        return
-    # OBSOLETE
-    # if mod[0] == "curl_biggest_rar" and curl_enabled:
-    #     displayname = mod[1]
-    #     url = mod[2]
-    #     curl_version = mod[3]
-    #     new_version = str()
-    #     savedfile = displayname + ".rar"
 
-    #     output.printstatus(0, displayname)
-    #     download(url, "/tmp/" + displayname + ".tmp")
-    #     output.debug("looking for" + curl_version)
-    #     with open("/tmp/" + displayname + ".tmp", "r") as page:
-    #         versions = list()
-    #         for line in page:
-    #             line = re.findall(curl_version, line)
-    #             if line:
-    #                 line = line[0].split('"')[0]
-    #                 versions.append(line)
-    #         versions.sort(reverse=True)
-    #         new_version = versions[0]
-    #         output.debug("found version: " + new_version)
-    #     download(os.path.join(url, new_version), savedfile)
-    #     Archive(savedfile).extractall(moddir)
-    #     os.remove(savedfile)
-    #     output.printstatus(2, displayname)
+        # link moddir/@mod to repo/@mod
+        if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            output.printstatus("linking", displayname)
+            os.symlink(dirs["mods"] + "/@" + displayname,
+                       dirs["repo"] + "/@" + displayname)
+        else:
+            output.printstatus("is_linked", displayname)
+        return
     if mod[0] == "curl_folder" and curl_enabled:
         displayname = mod[1]
         url = mod[2]
