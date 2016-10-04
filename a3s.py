@@ -105,11 +105,11 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # link mod to repo
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
-            printstatus("linking", displayname)
+            output.printstatus("linking", displayname)
             os.symlink(dirs["mods"] + "/@" + displayname,
                        dirs["repo"] + "/@" + displayname)
         else:
-            printstatus("is_linked", printstatus)
+            output.printstatus("is_linked", printstatus)
 
         output.printstatus(2, displayname)
     # Github
