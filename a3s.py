@@ -23,7 +23,7 @@ import EscapeAnsi
 import console
 import secret
 from misc import (download, gglob, link_to, pls_copy, read_config, get_dirs,
-                  rm_all_symlinks)
+                  rm_all_symlinks, get_sources)
 
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
