@@ -18,56 +18,11 @@ import fileinput
 import git
 import magic
 from pyunpack import Archive
-from requests import get
 # Import Locals
 import EscapeAnsi
 import console
 import secret
-
-
-def download(url, file_name, new_line=False):
-    """download <URL> to <file_name>"""
-    console.Output.debug("download " + url + " as " + file_name, new_line)
-    with open(file_name, "wb") as download_file:
-        response = get(url)
-        download_file.write(response.content)
-
-def link_to(output, src, dst, name):
-    """link <src> to <dst> and print status via <output>"""
-    if not os.path.islink(dst + "/@" + name):
-        output.printstatus("linking", name)
-        os.symlink(src + "/@" + name,
-                   dst + "/@" + name)
-    else:
-        output.printstatus("is_linked", name)
-    return
-
-
-def read_config(repo):
-    """read and return repo config"""
-    modlist = list()
-    with open(repo, "r") as conf:
-        for line in conf:
-            if line.startswith("#"):
-                continue
-            modlist.append(line.strip("\n").split(","))
-    return modlist
-
-
-def pls_copy(output, src, dst):
-    """just copy src to dst"""
-    if os.path.isdir(src):
-        output.debug("copy " + src + " to " + dst)
-        shutil.copytree(src, dst)
-    elif os.path.isfile(src):
-        output.debug("copy " + src + " to " + dst)
-        shutil.copy(src, dst)
-    else:
-        output.printstatus("err_not_exist", src)
-
-def gglob(pathname):
-    """yes, glob.glob is too long"""
-    return glob.glob(pathname)
+from misc import download, gglob, link_to, pls_copy, read_config
 
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
@@ -122,8 +77,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         zipname = file_format.replace("$version", new_version)
         savedfile = displayname + ".zip"
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-        download("https://github.com/" + github_loc +
-                 "/releases/download/" + new_tag + "/" + zipname,
+        download("https://github.com/" + github_loc
+                 + "/releases/download/" + new_tag + "/" + zipname,
                  savedfile)
 
         # extract <savedfile>
@@ -448,9 +403,9 @@ def main():
             is_failed = False
             with open("/tmp/steambag.tmp", "wb") as steambag:
                 output.printstatus(5)
-                login = input("Login: ")
+                login = sys.stdin.read("Login: ")
                 passwd = getpass.getpass()
-                steamguard = input("Steam Guard Code: ")
+                steamguard = sys.stdin.read("Steam Guard Code: ")
 
                 steambag.write("login " + login + " " + passwd
                                + " " + steamguard + "\n")
