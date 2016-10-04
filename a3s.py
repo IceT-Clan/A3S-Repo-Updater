@@ -43,6 +43,33 @@ def link_to(output, src, dst, name):
     return
 
 
+def read_config(repo):
+    """read and return repo config"""
+    modlist = list()
+    with open(repo, "r") as conf:
+        for line in conf:
+            if line.startswith("#"):
+                continue
+            modlist.append(line.strip("\n").split(","))
+    return modlist
+
+
+def pls_copy(output, src, dst):
+    """just copy src to dst"""
+    if os.path.isdir(src):
+        output.debug("copy " + src + " to " + dst)
+        shutil.copytree(src, dst)
+    elif os.path.isfile(src):
+        output.debug("copy " + src + " to " + dst)
+        shutil.copy(src, dst)
+    else:
+        output.printstatus("err_not_exist", src)
+
+def gglob(pathname):
+    """yes, glob.glob is too long"""
+    return glob.glob(pathname)
+
+
 def update(output, dirs, enabled_sources, mod, **kwargs):
     # Manual downloaded Mods
     if mod[0] == "manual":
@@ -380,15 +407,11 @@ def main():
 
     output.debug(args)
 
+    # get enabled sources
     enabled_sources = get_sources(args)
 
     # Read existing config
-    modlist = list()
-    with open("repo.cfg", "r") as conf:
-        for line in conf:
-            if line.startswith("#"):
-                continue
-            modlist.append(line.strip("\n").split(","))
+    modlist = read_config("repo.cfg")
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)
@@ -404,17 +427,20 @@ def main():
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
-                output.printstatus(4, mod[1])
+                output.printstatus("ace_opt_add", mod[1])
             # Steam Workshop
             if mod[0] == "steam" and enabled_sources["workshop"]:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
-                output.printstatus(3, mod[1])
+                output.printstatus("steambag_add", mod[1])
 
     # Steam Workshop
     if args.workshop_reset:
-        os.remove("/home/arma3/steamcmd/steamapps/" +
-                  "workshop/appworkshop_107410.acf")  # make path relative
+        output.printstatus("success_removed",
+                           "/home/arma3/steamcmd/steamapps/"
+                           + "workshop/appworkshop_107410.acf")
+        os.remove("/home/arma3/steamcmd/steamapps/"
+                  + "workshop/appworkshop_107410.acf")  # make path relative
 
     if args.update and enabled_sources["workshop"]:
         is_failed = True
@@ -426,14 +452,16 @@ def main():
                 passwd = getpass.getpass()
                 steamguard = input("Steam Guard Code: ")
 
-                steambag.write(bytes("login " + login + " " + passwd +
-                                     " " + steamguard + "\n", 'UTF-8'))
+                steambag.write("login " + login + " " + passwd
+                               + " " + steamguard + "\n")
 
+                # remove ugly login print
                 cursor_up_one = '\x1b[1A'
                 erase_line = '\x1b[2K'
-                for i in range(3):  # remove written stuff
+                for i in range(3):
                     print(cursor_up_one + erase_line + cursor_up_one)
-                # test if bytes can be removed
+
+                # add stuff 'cause steam
                 steambag.write("@nCSClientRateLimitKbps 50000\n")
                 steambag.write("@ShutdownOnFailedCommand 1\n")
                 steambag.write("DepotDownloadProgressTimeout 90000\n")
@@ -446,15 +474,15 @@ def main():
             output.debug("run \'" + dirs["steamcmd"]
                          + " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
-                sys.stdout.write("\rHide Text for security reasons." +
-                                 "THX VOLVO! (disable with --security 0)" +
-                                 ansi_escape.HIDDEN + "\n")
-                sys.stdout.write("\rThis does not seem to be working. " +
-                                 "Please use --security 2 instead\n")
-            if args.security == 2:
+                sys.stdout.write("\rHide Text for security reasons."
+                                 + "THX VOLVO! (disable with --security 0)"
+                                 + ansi_escape.HIDDEN + "\n")
+                sys.stdout.write("\rThis does not seem to be working. "
+                                 + "Please use --security 2 instead\n")
+            elif args.security == 2:
                 output.debug("redirect steam output to /dev/null")
-                sys.stdout.write("\rVoiding Steam Output.\n" +
-                                 "\tWARNING! This is of no means safe!\n")
+                sys.stdout.write("\rVoiding Steam Output.\n"
+                                 + "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + dirs["steamcmd"]
                           + " +runscript /tmp/steambag.tmp" + ">> /dev/null")
             else:
@@ -491,8 +519,6 @@ def main():
                 if out.upper() == "Y":
                     is_failed = False
 
-
-
     # ace_optionals
     if args.update and enabled_sources["ace_optionals"]:
         if os.path.isdir(dirs["mods"] + "/@ace_optionals"):
@@ -502,25 +528,11 @@ def main():
         for mod in ace_optional_files:
             output.debug("looking for " + dirs["mods"] + "/@ACE3/optionals/*"
                          + mod + "*")
-            for file in glob.glob(dirs["mods"] + "/@ACE3/optionals/*"
-                                  + mod + "*"):
+            for file in gglob(dirs["mods"] + "/@ACE3/optionals/*"
+                              + mod + "*"):
                 output.debug("found " + file)
-                if os.path.isdir(file):
-                    output.debug("copy " + file + " to "
-                                 + dirs["mods"] + "/@ace_optionals/addons/"
-                                 + os.path.basename(file))
-                    shutil.copytree(file,
-                                    dirs["mods"] + "/@ace_optionals/addons/" +
-                                    os.path.basename(file))
-                elif os.path.isfile(file):
-                    output.debug("copy " + file + " to "
-                                 + dirs["mods"] + "/@ace_optionals/addons/"
-                                 + os.path.basename(file))
-                    shutil.copy(file,
-                                dirs["mods"] + "/@ace_optionals/addons/" +
-                                os.path.basename(file))
-                else:
-                    output.printstatus("err_not_exist", file)
+                pls_copy(output, file, dirs["mods"] + "/@ace_optionals/addons/"
+                         + os.path.basename(file))
         output.printstatus("success_update", "@ace_optionals")
 
     # make apache like our mods

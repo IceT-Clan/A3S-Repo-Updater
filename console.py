@@ -52,6 +52,10 @@ class Output:
             sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_BLUE + "SKIP"
                              + self.ansi_escape.RESET + " ] " + displayname
                              + " is already linked" + "\n")
+        elif state == "success_removed":
+            sys.stdout.write("\r" + "[  " + self.ansi_escape.F_L_GREEN + "OK"
+                             + self.ansi_escape.RESET + "  ] " + displayname
+                             + " successfully removed" + "\n")
         elif state == "err_not_valid":
             sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_RED + "FAIL"
                              + self.ansi_escape.RESET + " ] "
