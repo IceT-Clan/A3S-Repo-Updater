@@ -32,6 +32,16 @@ def download(url, file_name, new_line=False):
         response = get(url)
         download_file.write(response.content)
 
+def link_to(output, src, dst, name):
+    """link <src> to <dst> and print status via <output>"""
+    if not os.path.islink(dst + "/@" + name):
+        output.printstatus("linking", name)
+        os.symlink(src + "/@" + name,
+                   dst + "/@" + name)
+    else:
+        output.printstatus("is_linked", name)
+    return
+
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
     # Manual downloaded Mods
@@ -92,6 +102,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         with zipfile.ZipFile(savedfile, "r") as packed:
             for zipinfo in packed.namelist():
                 target_dir = packed.extract(zipinfo, dirs["mods"])
+
         target_dir = target_dir.replace(dirs["mods"], '')
         target_dir = target_dir.split('/')[1]
         output.debug("rename " + dirs["mods"] + "/" + target_dir + " to "
@@ -112,13 +123,15 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         output.printstatus(2, displayname)
 
         # link moddir/@mod to repo/@mod
-        if not os.path.islink(dirs["repo"] + "/@" + displayname):
-            output.printstatus("linking", displayname)
-            os.symlink(dirs["mods"] + "/@" + displayname,
-                       dirs["repo"] + "/@" + displayname)
-        else:
-            output.printstatus("is_linked", displayname)
-        return
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
+        #     output.printstatus("linking", displayname)
+        #     os.symlink(dirs["mods"] + "/@" + displayname,
+        #                dirs["repo"] + "/@" + displayname)
+        # else:
+        #     output.printstatus("is_linked", displayname)
+        # return
+
     # Github
     if mod[0] == "github" and enabled_sources["github"]:
         displayname = mod[1]
@@ -145,14 +158,16 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         output.printstatus(2, displayname)
 
         # link moddir/@mod to repo/@mod
-        if not os.path.islink(dirs["repo"] + "/@" + displayname):
-            output.printstatus("linking", displayname)
-            os.symlink(dirs["mods"] + "/@" + displayname,
-                       dirs["repo"] + "/@" + displayname)
-        else:
-            output.printstatus("is_linked", displayname)
-        return
-    # download html file; grep regex; get biggest number:
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
+        #     output.printstatus("linking", displayname)
+        #     os.symlink(dirs["mods"] + "/@" + displayname,
+        #                dirs["repo"] + "/@" + displayname)
+        # else:
+        #     output.printstatus("is_linked", displayname)
+        # return
+
+    # download html file; grep regex; get biggest number;
     #  download found file; extract;
     if mod[0] == "curl_biggest_archive" and enabled_sources["curl"]:
         displayname = mod[1]
@@ -200,28 +215,42 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         output.printstatus("success_update", displayname)
 
         # link moddir/@mod to repo/@mod
-        if not os.path.islink(dirs["repo"] + "/@" + displayname):
-            output.printstatus("linking", displayname)
-            os.symlink(dirs["mods"] + "/@" + displayname,
-                       dirs["repo"] + "/@" + displayname)
-        else:
-            output.printstatus("is_linked", displayname)
-        return
-    if mod[0] == "curl_folder" and curl_enabled:
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
+        #     output.printstatus("linking", displayname)
+        #     os.symlink(dirs["mods"] + "/@" + displayname,
+        #                dirs["repo"] + "/@" + displayname)
+        # else:
+        #     output.printstatus("is_linked", displayname)
+        # return
+
+    if mod[0] == "curl_folder" and enabled_sources["curl"]:
         displayname = mod[1]
         url = mod[2]
         path = mod[2].split("//")[1]
+
         output.printstatus(0, displayname)
         if path.endswith("/"):
             path = path[:-1]
+
+        output.debug("wget " + url)
         os.system("wget -qq -r " + url)
-        output.debug("copytree " + path + " --> " + moddir + "/"
+        output.debug("copytree " + path + " --> " + dirs["mods"] + "/"
                      + "@" + displayname)
-        distutils.dir_util.copy_tree(path, moddir + "/" +
+        distutils.dir_util.copy_tree(path, dirs["mods"] + "/" +
                                      "@" + displayname)
         shutil.rmtree(path)
         output.printstatus(2, displayname)
-        return
+
+       # link moddir/@mod to repo/@mod
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        # if not os.path.islink(dirs["repo"] + "/@" + displayname):
+        #     output.printstatus("linking", displayname)
+        #     os.symlink(dirs["mods"] + "/@" + displayname,
+        #                dirs["repo"] + "/@" + displayname)
+        # else:
+        #     output.printstatus("is_linked", displayname)
+        # return
 
 def get_sources(args):
     """get all source flags from args and return as dict"""
