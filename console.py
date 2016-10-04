@@ -14,7 +14,7 @@ class Output:
     def printstatus(self, state, displayname="NO DISPLAY NAME", **kwargs):
         """print a status with information for the user"""
         state = str(state).lower()
-        if state == "update":
+        if state == "updating":
             # Updating
             sys.stdout.write("\r" + "[ " + self.ansi_escape.F_L_YELLOW
                              + "WAIT" + self.ansi_escape.RESET + " ] "

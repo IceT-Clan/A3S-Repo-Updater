@@ -16,12 +16,13 @@ import argparse
 import fileinput
 #from ftplib import FTP
 import git
+import magic
 from pyunpack import Archive
 from requests import get
 # Import Locals
 import EscapeAnsi
 import console
-
+import secret
 
 
 def download(url, file_name, new_line=False):
@@ -30,6 +31,7 @@ def download(url, file_name, new_line=False):
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
+
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
     # Manual downloaded Mods
@@ -40,6 +42,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
             os.symlink(dirs["manual"] + "/" + file_name,
                        dirs["repo"] + "/@" + displayname)
+        return
     # Github Release
     if mod[0] == "github-release" and enabled_sources["github"]:
         displayname = mod[1]
@@ -102,18 +105,18 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
+        output.printstatus(2, displayname)
 
-        # link mod to repo
+        # link moddir/@mod to repo/@mod
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
             output.printstatus("linking", displayname)
             os.symlink(dirs["mods"] + "/@" + displayname,
                        dirs["repo"] + "/@" + displayname)
         else:
-            output.printstatus("is_linked", printstatus)
-
-        output.printstatus(2, displayname)
+            output.printstatus("is_linked", displayname)
+        return
     # Github
-    if mod[0] == "github" and github_enabled:
+    if mod[0] == "github" and enabled_sources["github"]:
         displayname = mod[1]
         github_loc = mod[2]
         output.printstatus(0, displayname)
@@ -124,7 +127,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             if count != 0:
                 # Pull newest version from remote
                 modrepo.remotes.origin.pull()
-            elif not args.skip_version:
+            elif not kwargs["skip_version"]:
                 # No update needed
                 output.printstatus(1, displayname)
                 return
@@ -133,17 +136,27 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                                           github_loc + ".git",
                                           displayname)
             for mod_file in glob.glob(displayname + r"/@*"):
-                shutil.move(mod_file, moddir + "/" + displayname)
-
+                shutil.move(mod_file, dirs["mods"] + "/" + displayname)
         output.printstatus(2, displayname)
-    if mod[0] == "curl_biggest_zip" and curl_enabled:
+
+         # link moddir/@mod to repo/@mod
+        if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            output.printstatus("linking", displayname)
+            os.symlink(dirs["mods"] + "/@" + displayname,
+                       dirs["repo"] + "/@" + displayname)
+        else:
+            output.printstatus("is_linked", displayname)
+        return
+    # download html file; grep regex; get biggest number:
+    #  download found file; extract;
+    if mod[0] == "curl_biggest_archive" and enabled_sources["curl"]:
         displayname = mod[1]
         url = mod[2]
         curl_version = mod[3]
         new_version = str()
-        savedfile = displayname + ".zip"
+        savedfile = displayname + ".archive"
 
-        output.printstatus(0, displayname)
+        output.printstatus("updating", displayname)
         download(url, "/tmp/" + displayname + ".tmp")
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
@@ -155,39 +168,67 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             versions.sort(reverse=True)
             new_version = versions[0]
         download(os.path.join(url, new_version), savedfile)
-        if not zipfile.is_zipfile(savedfile):
-            output.printstatus(-1, displayname)
+
+        # if not zipfile.is_zipfile(savedfile):
+        #     output.printstatus(-1, displayname)
+        #     return
+        # target_dir = str()
+        # with zipfile.ZipFile(savedfile, "r") as packed:
+        #     for zipinfo in packed.namelist():
+        #         target_dir = packed.extract(zipinfo, moddir)
+        # Test if savedfile is a Archive
+        header = magic.from_file(savedfile).split(",")[0]
+        output.debug("File is :" + header)
+        if "archive" not in header:
+            output.printstatus("err_not_valid", file_type="archive",
+                               file_name=displayname)
             return
-        target_dir = str()
-        with zipfile.ZipFile(savedfile, "r") as packed:
-            for zipinfo in packed.namelist():
-                target_dir = packed.extract(zipinfo, moddir)
-        os.remove(savedfile)
-        output.printstatus(2, displayname)
-    if mod[0] == "curl_biggest_rar" and curl_enabled:
-        displayname = mod[1]
-        url = mod[2]
-        curl_version = mod[3]
-        new_version = str()
-        savedfile = displayname + ".rar"
+        if "Zip" in header:
+            # do zip stuff
+            pass
+        elif "7-zip" in header:
+            # do 7-zip stuff
+            pass
+        elif "RAR" in header:
+            # do rar stuff
+            pass
+        elif "Java" in header:
+            secret.android()
 
-        output.printstatus(0, displayname)
-        download(url, "/tmp/" + displayname + ".tmp")
-        output.debug("looking for" + curl_version)
-        with open("/tmp/" + displayname + ".tmp", "r") as page:
-            versions = list()
-            for line in page:
-                line = re.findall(curl_version, line)
-                if line:
-                    line = line[0].split('"')[0]
-                    versions.append(line)
-            versions.sort(reverse=True)
-            new_version = versions[0]
-            output.debug("found version: " + new_version)
-        download(os.path.join(url, new_version), savedfile)
-        Archive(savedfile).extractall(moddir)
+
+
+
+        # Cleanup
+        os.remove("/tmp/" + displayname + ".tmp")
         os.remove(savedfile)
-        output.printstatus(2, displayname)
+
+        output.printstatus("success_update", displayname)
+        return
+    # OBSOLETE
+    # if mod[0] == "curl_biggest_rar" and curl_enabled:
+    #     displayname = mod[1]
+    #     url = mod[2]
+    #     curl_version = mod[3]
+    #     new_version = str()
+    #     savedfile = displayname + ".rar"
+
+    #     output.printstatus(0, displayname)
+    #     download(url, "/tmp/" + displayname + ".tmp")
+    #     output.debug("looking for" + curl_version)
+    #     with open("/tmp/" + displayname + ".tmp", "r") as page:
+    #         versions = list()
+    #         for line in page:
+    #             line = re.findall(curl_version, line)
+    #             if line:
+    #                 line = line[0].split('"')[0]
+    #                 versions.append(line)
+    #         versions.sort(reverse=True)
+    #         new_version = versions[0]
+    #         output.debug("found version: " + new_version)
+    #     download(os.path.join(url, new_version), savedfile)
+    #     Archive(savedfile).extractall(moddir)
+    #     os.remove(savedfile)
+    #     output.printstatus(2, displayname)
     if mod[0] == "curl_folder" and curl_enabled:
         displayname = mod[1]
         url = mod[2]
@@ -202,7 +243,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                                      "@" + displayname)
         shutil.rmtree(path)
         output.printstatus(2, displayname)
-
+        return
 
 def get_sources(args):
     """get all source flags from args and return as dict"""
