@@ -255,6 +255,7 @@ def main():
         parser.print_help()
         sys.exit(2)
 
+    global output
     output = console.Output(args.debug)
     output.debug("enabled")
 
