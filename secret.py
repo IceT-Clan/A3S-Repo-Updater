@@ -1,5 +1,7 @@
 """ secret stuff"""
 import sys
+
+
 def android():
     """android ASCII art"""
     sys.stdout.write("\t             I                I             \n")

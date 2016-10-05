@@ -6,7 +6,7 @@ import glob
 import os
 import shutil
 import sys
-#import zipfile
+# import zipfile
 import getpass
 import re
 import subprocess
@@ -14,7 +14,7 @@ import distutils.dir_util
 # import Other
 import argparse
 import fileinput
-#from ftplib import FTP
+# from ftplib import FTP
 import git
 import magic
 from pyunpack import Archive
@@ -27,6 +27,7 @@ from misc import (download, gglob, link_to, pls_copy, read_config, get_dirs,
 
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
+    """update mods with given information"""
     # Manual downloaded Mods
     if mod[0] == "manual":
         displayname = mod[1]
@@ -78,8 +79,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         zipname = file_format.replace("$version", new_version)
         savedfile = displayname + ".zip"
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-        download("https://github.com/" + github_loc
-                 + "/releases/download/" + new_tag + "/" + zipname,
+        download("https://github.com/" + github_loc +
+                 "/releases/download/" + new_tag + "/" + zipname,
                  savedfile)
 
         # extract <savedfile>
@@ -192,14 +193,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         output.debug("wget " + url)
         os.system("wget -qq -r " + url)
-        output.debug("copytree " + path + " --> " + dirs["mods"] + "/"
-                     + "@" + displayname)
+        output.debug("copytree " + path + " --> " + dirs["mods"] + "/@" +
+                     displayname)
         distutils.dir_util.copy_tree(path, dirs["mods"] + "/" +
                                      "@" + displayname)
         shutil.rmtree(path)
         output.printstatus(2, displayname)
 
-       # link moddir/@mod to repo/@mod
+        # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
         return
 
@@ -275,7 +276,7 @@ def main():
     for mod in modlist:
         if args.update:
             rm_all_symlinks(dirs["repo"])
-            kargs = {"skip_version":args.skip_version}
+            kargs = {"skip_version": args.skip_version}
             update(output, dirs, enabled_sources, mod, kwargs=kargs)
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
@@ -290,10 +291,10 @@ def main():
     # Steam Workshop
     if args.workshop_reset:
         output.printstatus("success_removed",
-                           displayname=("/home/arma3/steamcmd/steamapps/"
-                                        + "workshop/appworkshop_107410.acf"))
-        os.remove("/home/arma3/steamcmd/steamapps/"
-                  + "workshop/appworkshop_107410.acf")  # make path relative
+                           displayname=("/home/arma3/steamcmd/steamapps/" +
+                                        "workshop/appworkshop_107410.acf"))
+        os.remove("/home/arma3/steamcmd/steamapps/" +
+                  "workshop/appworkshop_107410.acf")  # make path relative
 
     if args.update and enabled_sources["workshop"]:
         is_failed = True
@@ -305,8 +306,8 @@ def main():
                 passwd = getpass.getpass()
                 steamguard = sys.stdin.read("Steam Guard Code: ")
 
-                steambag.write("login " + login + " " + passwd
-                               + " " + steamguard + "\n")
+                steambag.write("login " + login + " " + passwd + " " +
+                               steamguard + "\n")
 
                 # remove ugly login print
                 cursor_up_one = '\x1b[1A'
@@ -319,36 +320,36 @@ def main():
                 steambag.write("@ShutdownOnFailedCommand 1\n")
                 steambag.write("DepotDownloadProgressTimeout 90000\n")
                 for workshop_id in workshop_ids:
-                    steambag.write("workshop_download_item 107410 "
-                                   + workshop_id + " validate" + "\n")
+                    steambag.write("workshop_download_item 107410 " +
+                                   workshop_id + " validate" + "\n")
                     output.debug("wrote " + workshop_id + " to steambag")
                 steambag.write("quit")
 
-            output.debug("run \'" + dirs["steamcmd"]
-                         + " +runscript /tmp/steambag.tmp\'")
+            output.debug("run \'" + dirs["steamcmd"] +
+                         " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
-                sys.stdout.write("\rHide Text for security reasons."
-                                 + "THX VOLVO! (disable with --security 0)"
-                                 + ansi_escape.HIDDEN + "\n")
-                sys.stdout.write("\rThis does not seem to be working. "
-                                 + "Please use --security 2 instead\n")
+                sys.stdout.write("\rHide Text for security reasons." +
+                                 "THX VOLVO! (disable with --security 0)" +
+                                 ansi_escape.HIDDEN + "\n")
+                sys.stdout.write("\rThis does not seem to be working. " +
+                                 "Please use --security 2 instead\n")
             elif args.security == 2:
                 output.debug("redirect steam output to /dev/null")
-                sys.stdout.write("\rVoiding Steam Output.\n"
-                                 + "\tWARNING! This is of no means safe!\n")
-                os.system("bash " + dirs["steamcmd"]
-                          + " +runscript /tmp/steambag.tmp" + ">> /dev/null")
+                sys.stdout.write("\rVoiding Steam Output.\n" +
+                                 "\tWARNING! This is of no means safe!\n")
+                os.system("bash " + dirs["steamcmd"] +
+                          " +runscript /tmp/steambag.tmp" + ">> /dev/null")
             else:
-                os.system("bash " + dirs["steamcmd"]
-                          + " +runscript /tmp/steambag.tmp")
+                os.system("bash " + dirs["steamcmd"] +
+                          " +runscript /tmp/steambag.tmp")
 
             sys.stdout.write(ansi_escape.HIDDEN_OFF)
             output.debug("remove steambag")
             os.remove("/tmp/steambag.tmp")
 
             for i, _ in enumerate(workshop_ids):
-                if not os.path.isdir(dirs["steamdownload"] + "/"
-                                     + workshop_ids[i]):
+                if not os.path.isdir(dirs["steamdownload"] + "/" +
+                                     workshop_ids[i]):
                     output.printstatus("err_not_exist",
                                        displayname=workshop_names[i])
                     output.printstatus("err_steam",
@@ -357,14 +358,13 @@ def main():
                     continue
                 if os.path.islink(dirs["repo"] + "/@" + workshop_names[i]):
                     output.printstatus("is_linked",
-                                       displayname=(dirs["repo"] + "/@"
-                                                    + workshop_names[i]))
+                                       displayname=(dirs["repo"] + "/@" +
+                                                    workshop_names[i]))
                     continue
 
-                output.debug("create symlink " + dirs["repo"] + "/@"
-                             + workshop_names[i] + " -> "
-                             + dirs["steamdownload"]
-                             + "/" + workshop_ids[i])
+                output.debug("create symlink " + dirs["repo"] + "/@" +
+                             workshop_names[i] + " -> " +
+                             dirs["steamdownload"] + "/" + workshop_ids[i])
                 os.symlink(dirs["steamdownload"] + "/" + workshop_ids[i],
                            dirs["repo"] + "/@" + workshop_names[i])
                 output.printstatus("success_linking",
@@ -374,7 +374,7 @@ def main():
                 out = input("Try Again? (y/N)")
                 if out.upper() == "Y":
                     is_failed = False
-            output.printstatus(2, displayname="Steam Workshop")
+            output.printstatus("success_update", displayname="Steam Workshop")
 
     # ace_optionals
     if args.update and enabled_sources["ace_optionals"]:
@@ -383,13 +383,13 @@ def main():
             shutil.rmtree(dirs["mods"] + "/@ace_optionals")
         os.makedirs(dirs["mods"] + "/@ace_optionals/addons")
         for mod in ace_optional_files:
-            output.debug("looking for " + dirs["mods"] + "/@ACE3/optionals/*"
-                         + mod + "*")
-            for file in gglob(dirs["mods"] + "/@ACE3/optionals/*"
-                              + mod + "*"):
+            output.debug("looking for " + dirs["mods"] + "/@ACE3/optionals/*" +
+                         mod + "*")
+            for file in gglob(dirs["mods"] + "/@ACE3/optionals/*" +
+                              mod + "*"):
                 output.debug("found " + file)
-                pls_copy(output, file, dirs["mods"] + "/@ace_optionals/addons/"
-                         + os.path.basename(file))
+                pls_copy(output, file, dirs["mods"] +
+                         "/@ace_optionals/addons/" + os.path.basename(file))
         output.printstatus("success_update", displayname="@ace_optionals")
 
     # make apache like our mods

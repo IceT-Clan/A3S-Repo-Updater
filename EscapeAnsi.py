@@ -1,4 +1,6 @@
 """providing EscapeAnsi"""
+
+
 class EscapeAnsi:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
        ANSI/VT100 colors and formats"""
