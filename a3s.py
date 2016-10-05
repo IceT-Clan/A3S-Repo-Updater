@@ -72,7 +72,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             return
 
         # Remove old Mod
-        output.debug("removing " + os.path.join(dirs["mods"], "@" + displayname))
+        output.debug("removing " +
+                     os.path.join(dirs["mods"], "@" + displayname), True)
         if os.path.isdir(os.path.join(dirs["mods"], "@" + displayname)):
             shutil.rmtree(os.path.join(dirs["mods"], "@" + displayname))
 

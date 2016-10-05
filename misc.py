@@ -81,16 +81,20 @@ def get_dirs(output, modlist):
             "manual": os.getcwd()}
     for mod in modlist:
         if mod[0] == "repolocation":
-            dirs["mods"] = mod[1]
-            output.debug("repo: " + dirs["mods"])
+            dirs["repo"] = mod[1]
+            output.debug("repo: " + dirs["repo"])
             continue
-        if mod[0] == "steamcmd":
+        elif mod[0] == "modlocation":
+            dirs["mods"] = mod[1]
+            output.debug("mods: " + dirs["mods"])
+            continue
+        elif mod[0] == "steamcmd":
             dirs["steamcmd"] = mod[1]
             dirs["steamdownload"] = mod[2]
             output.debug("steamcmd: " + dirs["steamcmd"] +
                          " steamdownload: " + dirs["steamdownload"])
             continue
-        if mod[0] == "manual_location":
+        elif mod[0] == "manual_location":
             dirs["manual"] = mod[1]
             output.debug("Manual mods: " + dirs["manual"])
             continue
