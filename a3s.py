@@ -1,185 +1,216 @@
 #!/usr/bin/env python3
 """Python-powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
-import argparse
-import fileinput
-import git
+# Import Built-Ins
 import glob
 import os
 import shutil
 import sys
-import zipfile
+# import zipfile
 import getpass
 import re
 import subprocess
 import distutils.dir_util
-
+# import Other
+import argparse
+import fileinput
+# from ftplib import FTP
+import git
+import magic
 from pyunpack import Archive
-from requests import get
-from ftplib import FTP
+# Import Locals
+import EscapeAnsi
+import console
+import secret
+from misc import (download, gglob, link_to, pls_copy, read_config, get_dirs,
+                  rm_all_symlinks, get_sources)
 
 
-class VT100Formats:
-    """http://misc.flogisoft.com/bash/tip_colors_and_formatting
-        ANSI/VT100 colors and formats"""
+def update(output, dirs, enabled_sources, mod, **kwargs):
+    """update mods with given information"""
+    # Manual downloaded Mods
+    if mod[0] == "manual":
+        displayname = mod[1]
+        file_name = mod[2]
 
-    # formatting
-    BOLD = '\033[1m'
-    DIM = '\033[2m'
-    STANDOUT = '\033[3m'
-    UNDERLINE = '\033[4m'
-    BLINK = '\033[5m'
-    FORMAT_6 = '\033[6m'
-    REVERSE = '\033[7m'
-    HIDDEN = '\033[8m'
+        output.printstatus("linking", displayname=displayname)
+        if not os.path.islink(dirs["repo"] + "/@" + displayname):
+            output.printstatus("linking", displayname)
+            os.symlink(dirs["manual"] + "/" + file_name,
+                       dirs["repo"] + "/@" + displayname)
+        else:
+            output.printstatus("is_linked", displayname=displayname)
+        return
+    # Github Release
+    if mod[0] == "github-release" and enabled_sources["github"]:
+        displayname = mod[1]
+        github_loc = mod[2]
+        file_format = mod[3]
+        cur_version = mod[4]
 
-    RESET = '\033[m'
+        output.printstatus("updating", displayname=displayname)
+        if os.path.isdir(displayname):
+            modrepo = git.Repo(displayname)
+            modrepo.remotes.origin.pull()
+        else:
+            modrepo = git.Repo.clone_from("https://github.com/" +
+                                          github_loc + ".git",
+                                          displayname)
 
-    BOLD_OFF = '\033[21m'
-    DIM_OFF = '\033[22m'
-    STANDOUT_OFF = '\033[23m'
-    UNDERLINE_OFF = '\033[24m'
-    BLINK_OFF = '\033[25m'
-    FORMAT_6_OFF = '\033[26m'
-    REVERSE_OFF = '\033[27m'
-    HIDDEN_OFF = '\033[28m'
+        # Check if an update is available
+        new_tag = subprocess.check_output(["git", "-C", displayname,
+                                           "describe", "--abbrev=0",
+                                           "--tags"])
+        new_tag = new_tag.decode("UTF-8")
+        new_tag = new_tag[:-1]
+        new_version = new_tag
+        if new_tag.startswith("v"):
+            new_version = new_tag[1:]
+        if new_tag == cur_version and not kwargs["skip_version"]:
+            # No update needed
+            output.printstatus("is_up_to_date", displayname=displayname)
+            return
 
-    # 8 foreground colors
-    F_COLOR_OFF = '\033[39m'
-    F_BLACK = '\033[30m'
-    F_RED = '\033[31m'
-    F_GREEN = '\033[32m'
-    F_YELLOW = '\033[33m'
-    F_BLUE = '\033[34m'
-    F_MAGENTA = '\033[35m'
-    F_CYAN = '\033[36m'
+        # Remove old Mod
+        if os.path.isdir(os.path.join(dirs["mods"], "@" + displayname)):
+            shutil.rmtree(os.path.join(dirs["mods"], "@" + displayname))
 
-    F_L_GRAY = '\033[37m'
-    F_GRAY = '\033[90m'
+        # Download newest version
+        zipname = file_format.replace("$version", new_version)
+        savedfile = displayname + ".zip"
+        output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
+        download("https://github.com/" + github_loc +
+                 "/releases/download/" + new_tag + "/" + zipname,
+                 savedfile)
 
-    F_L_RED = '\033[91m'
-    F_L_GREEN = '\033[92m'
-    F_L_YELLOW = '\033[93m'
-    F_L_BLUE = '\033[94m'
-    F_L_MAGENTA = '\033[95m'
-    F_L_CYAN = '\033[96m'
+        # extract <savedfile>
+        Archive(savedfile).extractall(dirs["mods"])
 
-    F_WHITE = '\033[97m'
+        # Remove .zip file
+        os.remove(savedfile)
 
-    # 8 background colors
-    B_COLOR_OFF = '\033[49m'
-    B_BLACK = '\033[40m'
-    B_RED = '\033[41m'
-    B_GREEN = '\033[42m'
-    B_YELLOW = '\033[43m'
-    B_BLUE = '\033[44m'
-    B_MAGENTA = '\033[45m'
-    B_CYAN = '\033[46m'
+        # Write new version to config
+        old_line = ",".join([str(x) for x in mod])
+        new_line = old_line.replace(cur_version, new_tag)
+        for line in fileinput.input("repo.cfg", inplace=1):
+            if old_line in line:
+                line = line.replace(old_line, new_line)
+            sys.stdout.write(line)
+        output.printstatus("success_update", displayname=displayname)
 
-    B_L_GRAY = '\033[47m'
-    B_GRAY = '\033[100m'
+        # link moddir/@mod to repo/@mod
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        return
 
-    B_L_RED = '\033[101m'
-    B_L_GREEN = '\033[102m'
-    B_L_YELLOW = '\033[103m'
-    B_L_BLUE = '\033[104m'
-    B_L_MAGENTA = '\033[105m'
-    B_L_CYAN = '\033[106m'
+    # Github
+    if mod[0] == "github" and enabled_sources["github"]:
+        displayname = mod[1]
+        github_loc = mod[2]
+        output.printstatus("updating", displayname=displayname)
 
-    B_WHITE = '\033[107m'
+        if os.path.isdir(displayname):
+            modrepo = git.Repo(displayname)
+            count = sum(1 for c in
+                        modrepo.iter_commits('master..origin/master'))
+            if count != 0:
+                # Pull newest version from remote
+                modrepo.remotes.origin.pull()
+            elif not kwargs["skip_version"]:
+                # No update needed
+                output.printstatus("is_up_to_date", displayname=displayname)
+                return
+        else:
+            modrepo = git.Repo.clone_from("https://github.com/" +
+                                          github_loc + ".git",
+                                          displayname)
+            for mod_file in glob.glob(displayname + r"/@*"):
+                shutil.move(mod_file, dirs["mods"] + "/" + displayname)
+        output.printstatus("success_update", displayname=displayname)
 
-    F_COLOR_INIT = '\033[38;5;'
-    B_COLOR_INIT = '\033[48;5;'
+        # link moddir/@mod to repo/@mod
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        return
 
-    # 256 forground colors
-    def f_color(self, color_number):
-        """print foreground color switch"""
-        return self.F_COLOR_INIT + color_number + 'm'
+    # download html file; grep regex; get biggest number;
+    #  download found file; extract;
+    if mod[0] == "curl_biggest_archive" and enabled_sources["curl"]:
+        displayname = mod[1]
+        url = mod[2]
+        curl_version = mod[3]
+        new_version = str()
+        savedfile = displayname + ".archive"
 
-    # 256 background colors
-    def b_color(self, color_number):
-        """print background color switch"""
-        return self.B_COLOR_INIT + color_number + 'm'
+        output.printstatus("updating", displayname)
+        download(url, "/tmp/" + displayname + ".tmp")
+        with open("/tmp/" + displayname + ".tmp", "r") as page:
+            versions = list()
+            for line in page:
+                line = re.findall(curl_version, line)
+                if line:
+                    line = line[0].split('"')[0]
+                    versions.append(line)
+            versions.sort(reverse=True)
+            new_version = versions[0]
+        download(os.path.join(url, new_version), savedfile)
 
+        # get file type of <savedfile>
+        header = magic.from_file(savedfile).split(",")[0]
+        output.debug("File is :" + header)
 
-def download(url, file_name, new_line = False):
-    """download url to file_name"""
-    debug("download " + url + " as " + file_name, new_line)
-    with open(file_name, "wb") as download_file:
-        response = get(url)
-        download_file.write(response.content)
+        # only continue if file type is an archive
+        if "archive" not in header:
+            output.printstatus("err_not_valid", file_type="archive",
+                               file_name=displayname)
+            return
+        output.debug("found file type '" + header + "' for file " + savedfile)
 
+        if "Java" in header:
+            secret.android()
+            return
+        output.debug("inflating " + savedfile)
 
-def printstatus(state, displayname="NO DISPLAY NAME"):
-    """print a staus state with displayname"""
-    if state == 0:
-        # Updating
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT" +
-                         VT100Formats.RESET + " ] " + "Updating " +
-                         displayname + "...")
-    elif state == 1:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK" +
-                         VT100Formats.RESET + "  ] " + displayname +
-                         " is up to date" + "\n")
-    elif state == 2:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_GREEN + "OK" +
-                         VT100Formats.RESET + "  ] " + displayname +
-                         " successfully updated" + "\n")
-    elif state == 3:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK" +
-                         VT100Formats.RESET + "  ] " + displayname +
-                         " has been added to the Steam Bag" + "\n")
-    elif state == 4:
-        sys.stdout.write("\r" + "[  " + VT100Formats.F_L_BLUE + "OK" +
-                         VT100Formats.RESET + "  ] " + displayname +
-                         " will be added to @ace_optinals" + "\n")
-    elif state == 5:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_YELLOW + "WAIT" +
-                         VT100Formats.RESET + " ] " +
-                         "doing Steam Workshop" + "\n")
-    elif state == 6:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_BLUE + "SKIP" +
-                         VT100Formats.RESET + " ] " + displayname +
-                         " is already linked" + "\n")
-    elif state == -1:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
-                         VT100Formats.RESET + " ] " + displayname +
-                         " is not a valid ZIP-Archive" + "\n")
-    elif state == -2:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
-                         VT100Formats.RESET + " ] " + displayname +
-                         " does not exist" + "\n")
-    elif state == -3:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
-                         VT100Formats.RESET + " ] " +
-                         "Maybe SteamCMD did not download " + displayname +
-                         " correctly? " +
-                         "(use --steam-only to skip other sources)" + "\n")
-    elif state == -4:
-        sys.stdout.write("\r" + "[ " + VT100Formats.F_L_RED + "FAIL" +
-                         VT100Formats.RESET + " ] " + displayname +
-                         " is not a valid RAR-Archive" + "\n")
+        # extract <savedfile> to <dirs["mods"]>
+        Archive(savedfile).extractall(dirs["mods"])
 
-is_debug = False
-def debug(msg, add_newline=False):
-    """print debug messages"""
-    if add_newline:
-        newline = "\n"
-    else:
-        newline = ""
-    if is_debug:
-        sys.stdout.write(newline + "[" + VT100Formats.BOLD + "DEBUG" +
-                         VT100Formats.RESET + "] " + str(msg) + "\n")
+        # Cleanup
+        os.remove("/tmp/" + displayname + ".tmp")
+        os.remove(savedfile)
+
+        output.printstatus("success_update", displayname)
+
+        # link moddir/@mod to repo/@mod
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        return
+
+    if mod[0] == "curl_folder" and enabled_sources["curl"]:
+        displayname = mod[1]
+        url = mod[2]
+        path = mod[2].split("//")[1]
+
+        output.printstatus(0, displayname)
+        if path.endswith("/"):
+            path = path[:-1]
+
+        output.debug("wget " + url)
+        os.system("wget -qq -r " + url)
+        output.debug("copytree " + path + " --> " + dirs["mods"] + "/@" +
+                     displayname)
+        distutils.dir_util.copy_tree(path, dirs["mods"] + "/" +
+                                     "@" + displayname)
+        shutil.rmtree(path)
+        output.printstatus(2, displayname)
+
+        # link moddir/@mod to repo/@mod
+        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        return
 
 
 def main():
     """main"""
-    workshop_ids = list()
-    workshop_names = list()
-    ace_optional_files = list()
+    ansi_escape = EscapeAnsi.EscapeAnsi()
 
     # Command line argument setup
-    parser = argparse.ArgumentParser(description="Arma 3 Repository Updater")
+    parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
     group = parser.add_mutually_exclusive_group(required=True)
 
     parser.add_argument("-v", "--version",
@@ -195,7 +226,7 @@ def main():
     group.add_argument("-u", "--update", action="store_true",
                        help="Update repository")
 
-    parser.add_argument("--security", type=int, default=1,
+    parser.add_argument("--security", type=int, default=2,
                         help="set security level")
     parser.add_argument("--ignore-version", action="store_true",
                         help="ignore version checking", dest="skip_version")
@@ -222,347 +253,148 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    global is_debug
-    is_debug = args.debug
-    debug("enabled")
+    output = console.Output(args.debug)
+    output.debug("enabled")
 
     if args.security > 2:
         args.security = 2
 
-    if is_debug:
-        debug(args)
+    output.debug(args)
 
-    github_enabled = True
-    workshop_enabled = True
-    ace_optionals_enabled = True
-    curl_enabled = True
-    if args.workshop_only:
-        github_enabled = False
-        ace_optionals_enabled = False
-        curl_enabled = False
-    if args.no_workshop:
-        workshop_enabled = False
-    if args.no_github:
-        github_enabled = False
-    if args.no_ace_optionals:
-        ace_optionals_enabled = False
+    # get enabled sources
+    enabled_sources = get_sources(args)
 
     # Read existing config
-    modlist = list()
-    with open("repo.cfg", "r") as conf:
-        for line in conf:
-            if line.startswith("#"):
-                continue
-            modlist.append(line.strip("\n").split(","))
+    modlist = read_config("repo.cfg")
 
     # Locate saving directory for installed mods
-    moddir = os.getcwd()
+    dirs = get_dirs(output, modlist)
+
+    workshop_ids = list()
+    workshop_names = list()
+    ace_optional_files = list()
     for mod in modlist:
-        if mod[0] == "repolocation":
-            moddir = mod[1]
-            debug("Repo:" + moddir)
-            continue
-        if mod[0] == "steamcmd":
-            steamcmd = mod[1]
-            steamdownload = mod[2]
-            debug("steamcmd:" + steamcmd +
-                  " steamdownload:" + steamdownload)
-            continue
-        if mod[0] == "manual_location":
-            manual_location = mod[1]
-            debug("Manual mods:" + manual_location)
         if args.update:
-            # Manual downloaded Mods
-            if mod[0] == "manual":
-                displayname = mod[1]
-                file_name = mod[2]
-                if not os.path.islink(moddir + "/@" + displayname):
-                    os.symlink(manual_location + "/" + file_name,
-                               moddir + "/@" + displayname)
-            # Github Release
-            if mod[0] == "github-release" and github_enabled:
-                displayname = mod[1]
-                github_loc = mod[2]
-                file_format = mod[3]
-                cur_version = mod[4]
-                printstatus(0, displayname)
-                if os.path.isdir(displayname):
-                    modrepo = git.Repo(displayname)
-                    modrepo.remotes.origin.pull()
-                else:
-                    modrepo = git.Repo.clone_from("https://github.com/" +
-                                                  github_loc + ".git",
-                                                  displayname)
-
-                # Check if an update is available
-                #new_tag = str(modrepo.git.tag(l=True))
-                new_tag = subprocess.check_output(["git", "-C",
-                                                   displayname,
-                                                   "describe",
-                                                   "--abbrev=0",
-                                                   "--tags"])
-                new_tag = new_tag.decode("UTF-8")
-                new_tag = new_tag[:-1]
-                new_version = new_tag
-                if new_tag.startswith("v"):
-                    new_version = new_tag[1:]
-                if new_tag == cur_version and not args.skip_version:
-                    # No update needed
-                    printstatus(1, displayname)
-                    continue
-
-                # Remove old Mod
-                if os.path.isdir(os.path.join(moddir, "@" + displayname)):
-                    shutil.rmtree(os.path.join(moddir, "@" + displayname))
-
-                # Download newest version
-                zipname = file_format.replace("$version", new_version)
-                savedfile = displayname + ".zip"
-                debug("zipname: " + zipname + "; savedfile: " + savedfile)
-                """if args.debug: debug("download https://github.com/"
-                                     + github_loc +
-                                     "/releases/download/" + new_tag + "/"
-                                     + zipname + " as " + savedfile)"""
-                download("https://github.com/" + github_loc +
-                         "/releases/download/" + new_tag + "/" + zipname,
-                         savedfile)
-
-                if not zipfile.is_zipfile(savedfile):
-                    printstatus(-1, displayname)
-                    continue
-                target_dir = str()
-                with zipfile.ZipFile(savedfile, "r") as packed:
-                    for zipinfo in packed.namelist():
-                        target_dir = packed.extract(zipinfo, moddir)
-                target_dir = target_dir.replace(moddir, '')
-                target_dir = target_dir.split('/')[1]
-                debug("rename " + moddir + "/" + target_dir + " to " +
-                      moddir + "/" + "@" + displayname)
-                os.rename(moddir + "/" + target_dir,
-                          moddir + "/" + "@" + displayname)
-                os.remove(savedfile)  # Remove .zip file
-
-                # Write new version to config
-                old_line = ",".join([str(x) for x in mod])
-                new_line = old_line.replace(cur_version, new_tag)
-                for line in fileinput.input("repo.cfg", inplace=1):
-                    if old_line in line:
-                        line = line.replace(old_line, new_line)
-                    sys.stdout.write(line)
-
-                printstatus(2, displayname)
-            # Github
-            if mod[0] == "github" and github_enabled:
-                displayname = mod[1]
-                github_loc = mod[2]
-                printstatus(0, displayname)
-                if os.path.isdir(displayname):
-                    modrepo = git.Repo(displayname)
-                    count = sum(1 for c in
-                                modrepo.iter_commits('master..origin/master'))
-                    if count != 0:
-                        # Pull newest version from remote
-                        modrepo.remotes.origin.pull()
-                    elif not args.skip_version:
-                        # No update needed
-                        printstatus(1, displayname)
-                        continue
-                else:
-                    modrepo = git.Repo.clone_from("https://github.com/" +
-                                                  github_loc + ".git",
-                                                  displayname)
-                    for mod_file in glob.glob(displayname + r"/@*"):
-                        shutil.move(mod_file, moddir + "/" + displayname)
-
-                printstatus(2, displayname)
+            rm_all_symlinks(dirs["repo"])
+            update(output, dirs, enabled_sources, mod,
+                   skip_version=args.skip_version)
             # ace_optionals
-            if mod[0] == "ace_optionals" and ace_optionals_enabled:
+            if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
-                printstatus(4, mod[1])
+                output.printstatus("ace_opt_add", displayname=mod[1])
             # Steam Workshop
-            if mod[0] == "steam" and workshop_enabled:
+            if mod[0] == "steam" and enabled_sources["workshop"]:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
-                printstatus(3, mod[1])
-            if mod[0] == "curl_biggest_zip" and curl_enabled:
-                displayname = mod[1]
-                url = mod[2]
-                curl_version = mod[3]
-                new_version = str()
-                savedfile = displayname + ".zip"
-
-                printstatus(0, displayname)
-                download(url, "/tmp/" + displayname + ".tmp")
-                with open("/tmp/" + displayname + ".tmp", "r") as page:
-                    versions = list()
-                    for line in page:
-                        line = re.findall(curl_version, line)
-                        if line:
-                            line = line[0].split('"')[0]
-                            versions.append(line)
-                    versions.sort(reverse=True)
-                    new_version = versions[0]
-                download(os.path.join(url, new_version), savedfile)
-                if not zipfile.is_zipfile(savedfile):
-                    printstatus(-1, displayname)
-                    continue
-                target_dir = str()
-                with zipfile.ZipFile(savedfile, "r") as packed:
-                    for zipinfo in packed.namelist():
-                        target_dir = packed.extract(zipinfo, moddir)
-                os.remove(savedfile)
-                printstatus(2, displayname)
-            if mod[0] == "curl_biggest_rar" and curl_enabled:
-                displayname = mod[1]
-                url = mod[2]
-                curl_version = mod[3]
-                new_version = str()
-                savedfile = displayname + ".rar"
-
-                printstatus(0, displayname)
-                download(url, "/tmp/" + displayname + ".tmp")
-                debug("looking for" + curl_version)
-                with open("/tmp/" + displayname + ".tmp", "r") as page:
-                    versions = list()
-                    for line in page:
-                        line = re.findall(curl_version, line)
-                        if line:
-                            line = line[0].split('"')[0]
-                            versions.append(line)
-                    versions.sort(reverse=True)
-                    new_version = versions[0]
-                    debug("found version: " + new_version)
-                download(os.path.join(url, new_version), savedfile)
-                Archive(savedfile).extractall(moddir)
-                os.remove(savedfile)
-                printstatus(2, displayname)
-            if mod[0] == "curl_folder" and curl_enabled:
-                displayname = mod[1]
-                url = mod[2]
-                path = mod[2].split("//")[1]
-                printstatus(0, displayname)
-                if path.endswith("/"):
-                    path = path[:-1]
-                os.system("wget -qq -r " + url)
-                debug("copytree " + path + " --> " + moddir + "/" +
-                      "@" + displayname)
-                distutils.dir_util.copy_tree(path, moddir + "/" +
-                                             "@" + displayname)
-                shutil.rmtree(path)
-                printstatus(2, displayname)
-
-            # update loop done
-        # loop done
-    # loop complete
+                output.printstatus("steambag_add", displayname=mod[1])
 
     # Steam Workshop
     if args.workshop_reset:
+        output.printstatus("success_removed",
+                           displayname=("/home/arma3/steamcmd/steamapps/" +
+                                        "workshop/appworkshop_107410.acf"))
         os.remove("/home/arma3/steamcmd/steamapps/" +
                   "workshop/appworkshop_107410.acf")  # make path relative
 
-    if args.update and workshop_enabled:
+    if args.update and enabled_sources["workshop"]:
         is_failed = True
         while is_failed:
             is_failed = False
             with open("/tmp/steambag.tmp", "wb") as steambag:
-                printstatus(5)
-                login = input("Login: ")
+                output.printstatus(5)
+                login = sys.stdin.read("Login: ")
                 passwd = getpass.getpass()
-                steamguard = input("Steam Guard Code: ")
+                steamguard = sys.stdin.read("Steam Guard Code: ")
 
-                steambag.write(bytes("login " + login + " " + passwd +
-                                     " " + steamguard + "\n", 'UTF-8'))
+                steambag.write("login " + login + " " + passwd + " " +
+                               steamguard + "\n")
 
-                CURSOR_UP_ONE = '\x1b[1A'
-                ERASE_LINE = '\x1b[2K'
-                for i in range(3):  # remove written stuff
-                    print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
-                # test if bytes can be removed
-                steambag.write(bytes("@nCSClientRateLimitKbps 50000\n", 'UTF-8'))
-                steambag.write(bytes("@ShutdownOnFailedCommand 1\n", 'UTF-8'))
-                steambag.write(bytes("DepotDownloadProgressTimeout 90000\n",
-                                     'UTF-8'))
+                # remove ugly login print
+                cursor_up_one = '\x1b[1A'
+                erase_line = '\x1b[2K'
+                for i in range(3):
+                    print(cursor_up_one + erase_line + cursor_up_one)
+
+                # add stuff 'cause steam
+                steambag.write("@nCSClientRateLimitKbps 50000\n")
+                steambag.write("@ShutdownOnFailedCommand 1\n")
+                steambag.write("DepotDownloadProgressTimeout 90000\n")
                 for workshop_id in workshop_ids:
-                    steambag.write(bytes("workshop_download_item 107410 " +
-                                         workshop_id + " validate" + "\n",
-                                         'UTF-8'))
-                    debug("wrote " + workshop_id + " to steambag")
-                steambag.write(bytes("quit", 'UTF-8'))
+                    steambag.write("workshop_download_item 107410 " +
+                                   workshop_id + " validate" + "\n")
+                    output.debug("wrote " + workshop_id + " to steambag")
+                steambag.write("quit")
 
-            debug("run \'" + steamcmd + " +runscript /tmp/steambag.tmp\'")
+            output.debug("run \'" + dirs["steamcmd"] +
+                         " +runscript /tmp/steambag.tmp\'")
             if args.security == 1:
                 sys.stdout.write("\rHide Text for security reasons." +
                                  "THX VOLVO! (disable with --security 0)" +
-                                 VT100Formats.HIDDEN + "\n")
+                                 ansi_escape.HIDDEN + "\n")
                 sys.stdout.write("\rThis does not seem to be working. " +
                                  "Please use --security 2 instead\n")
-            if args.security == 2:
-                debug("redir steam output to /dev/null")
+            elif args.security == 2:
+                output.debug("redirect steam output to /dev/null")
                 sys.stdout.write("\rVoiding Steam Output.\n" +
                                  "\tWARNING! This is of no means safe!\n")
-                os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp" +
-                          ">> /dev/null")
+                os.system("bash " + dirs["steamcmd"] +
+                          " +runscript /tmp/steambag.tmp" + ">> /dev/null")
             else:
-                os.system("bash " + steamcmd + " +runscript /tmp/steambag.tmp")
+                os.system("bash " + dirs["steamcmd"] +
+                          " +runscript /tmp/steambag.tmp")
 
-            sys.stdout.write(VT100Formats.HIDDEN_OFF)
-            debug("remove steambag")
+            sys.stdout.write(ansi_escape.HIDDEN_OFF)
+            output.debug("remove steambag")
             os.remove("/tmp/steambag.tmp")
 
-            for i in range(len(workshop_ids)):
-                if not os.path.isdir(steamdownload + "/" + workshop_ids[i]):
-                    printstatus(-2, workshop_names[i])
-                    printstatus(-3, workshop_ids[i])
+            for i, _ in enumerate(workshop_ids):
+                if not os.path.isdir(dirs["steamdownload"] + "/" +
+                                     workshop_ids[i]):
+                    output.printstatus("err_not_exist",
+                                       displayname=workshop_names[i])
+                    output.printstatus("err_steam",
+                                       displayname=workshop_ids[i])
                     is_failed = True
                     continue
-                if os.path.islink(moddir + "/@" + workshop_names[i]):
-                    printstatus(6, moddir + "/@" + workshop_names[i])
+                if os.path.islink(dirs["repo"] + "/@" + workshop_names[i]):
+                    output.printstatus("is_linked",
+                                       displayname=(dirs["repo"] + "/@" +
+                                                    workshop_names[i]))
                     continue
 
-                debug("create symlink " + moddir + "/@" + workshop_names[i] +
-                      " -> " + steamdownload + "/" + workshop_ids[i])
-                os.symlink(steamdownload + "/" + workshop_ids[i],
-                           moddir + "/@" + workshop_names[i])
-                printstatus(2, workshop_names[i])
-            printstatus(2, "Steam Workshop")
+                output.debug("create symlink " + dirs["repo"] + "/@" +
+                             workshop_names[i] + " -> " +
+                             dirs["steamdownload"] + "/" + workshop_ids[i])
+                os.symlink(dirs["steamdownload"] + "/" + workshop_ids[i],
+                           dirs["repo"] + "/@" + workshop_names[i])
+                output.printstatus("success_linking",
+                                   displayname=workshop_names[i])
             if is_failed:
                 sys.stdout.write("Workshop Update seems to have failed.")
                 out = input("Try Again? (y/N)")
                 if out.upper() == "Y":
                     is_failed = False
-
-
+            output.printstatus("success_update", displayname="Steam Workshop")
 
     # ace_optionals
-    if args.update and ace_optionals_enabled:
-        if os.path.isdir(moddir + "/@ace_optionals"):
-            debug("existing @ace_optionals found. removing old files")
-            shutil.rmtree(moddir + "/@ace_optionals")
-        os.makedirs(moddir + "/@ace_optionals/addons")
+    if args.update and enabled_sources["ace_optionals"]:
+        if os.path.isdir(dirs["mods"] + "/@ace_optionals"):
+            output.debug("existing @ace_optionals found. removing old files")
+            shutil.rmtree(dirs["mods"] + "/@ace_optionals")
+        os.makedirs(dirs["mods"] + "/@ace_optionals/addons")
         for mod in ace_optional_files:
-            debug("looking for " + moddir + "/@ACE3/optionals/*" + mod + "*")
-            for file in glob.glob(moddir + "/@ACE3/optionals/*" + mod + "*"):
-                debug("found " + file)
-                if os.path.isdir(file):
-                    debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" +
-                          os.path.basename(file))
-                    shutil.copytree(file,
-                                    moddir + "/@ace_optionals/addons/" +
-                                    os.path.basename(file))
-                elif os.path.isfile(file):
-                    debug("copy " + file + " to " +
-                          moddir + "/@ace_optionals/addons/" +
-                          os.path.basename(file))
-                    shutil.copy(file,
-                                moddir + "/@ace_optionals/addons/" +
-                                os.path.basename(file))
-                else:
-                    printstatus(-2, file)
-        printstatus(2, "@ace_optionals")
-    # make apache like our downloads
-    if args.update:
-        for root, _, _ in os.walk(moddir):
+            output.debug("looking for " + dirs["mods"] + "/@ACE3/optionals/*" +
+                         mod + "*")
+            for file in gglob(dirs["mods"] + "/@ACE3/optionals/*" +
+                              mod + "*"):
+                output.debug("found " + file)
+                pls_copy(output, file, dirs["mods"] +
+                         "/@ace_optionals/addons/" + os.path.basename(file))
+        output.printstatus("success_update", displayname="@ace_optionals")
+
+    # make apache like our mods
+    if args.update and False:
+        for root, _, _ in os.walk(dirs["moddir"]):
             if not root == ".a3s":
                 os.chmod(root, 0o755)
         return

@@ -1,17 +1,19 @@
 # Arma3Sync Repository Updater
---decsription--
+A Python Python-powered Mod Updater for Arma3Sync Repositorys with steam workshop integration
 
 ## Features
-* Mods on Steam Workshop
-* Mods on Github (configurable paths)
-* Mods on armedassault.info
-* ace_optionals generation
+* Updating mods
+* organizing said mods
 
 ## Requirements
 * [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD#Downloading_SteamCMD)
 * [python3](https://www.python.org/downloads/)
 * [pyunpack](https://pypi.python.org/pypi/pyunpack)
 * [patool](https://pypi.python.org/pypi/patool)
+* [argparse]
+* [gitpython]
+* [glob2]
+* [requests]
 
 ## Usage
 a3s-repo-updater.py --add
@@ -21,4 +23,4 @@ a3s-repo-updater.py --remove
 a3s-repo-updater.py --update
 
 ## License
-A3S Repository Updater is licensed under the [MIT license](LICENSE).
+A3S Repository Updater is licensed under the [GNU license](LICENSE).

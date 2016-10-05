@@ -9,3 +9,4 @@ gitpython
 glob2
 pyunpack
 requests
+python-magic
