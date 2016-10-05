@@ -48,7 +48,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         file_format = mod[3]
         cur_version = mod[4]
 
-        output.printstatus("updating", displayname)
+        output.printstatus("updating", displayname=displayname)
         if os.path.isdir(displayname):
             modrepo = git.Repo(displayname)
             modrepo.remotes.origin.pull()
@@ -106,7 +106,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
     if mod[0] == "github" and enabled_sources["github"]:
         displayname = mod[1]
         github_loc = mod[2]
-        output.printstatus(0, displayname)
+        output.printstatus("updating", displayname=displayname)
 
         if os.path.isdir(displayname):
             modrepo = git.Repo(displayname)
@@ -276,8 +276,8 @@ def main():
     for mod in modlist:
         if args.update:
             rm_all_symlinks(dirs["repo"])
-            kargs = {"skip_version": args.skip_version}
-            update(output, dirs, enabled_sources, mod, kwargs=kargs)
+            update(output, dirs, enabled_sources, mod,
+                   skip_version=args.skip_version)
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
