@@ -32,13 +32,13 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         displayname = mod[1]
         file_name = mod[2]
 
-        output.printstatus("linking", displayname)
+        output.printstatus("linking", displayname=displayname)
         if not os.path.islink(dirs["repo"] + "/@" + displayname):
             output.printstatus("linking", displayname)
             os.symlink(dirs["manual"] + "/" + file_name,
                        dirs["repo"] + "/@" + displayname)
         else:
-            output.printstatus("is_linked", displayname)
+            output.printstatus("is_linked", displayname=displayname)
         return
     # Github Release
     if mod[0] == "github-release" and enabled_sources["github"]:
@@ -67,7 +67,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             new_version = new_tag[1:]
         if new_tag == cur_version and not kwargs["skip_version"]:
             # No update needed
-            output.printstatus(1, displayname)
+            output.printstatus("is_up_to_date", displayname=displayname)
             return
 
         # Remove old Mod
@@ -95,7 +95,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
-        output.printstatus(2, displayname)
+        output.printstatus("success_update", displayname=displayname)
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
@@ -116,7 +116,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 modrepo.remotes.origin.pull()
             elif not kwargs["skip_version"]:
                 # No update needed
-                output.printstatus(1, displayname)
+                output.printstatus("is_up_to_date", displayname=displayname)
                 return
         else:
             modrepo = git.Repo.clone_from("https://github.com/" +
@@ -124,7 +124,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                                           displayname)
             for mod_file in glob.glob(displayname + r"/@*"):
                 shutil.move(mod_file, dirs["mods"] + "/" + displayname)
-        output.printstatus(2, displayname)
+        output.printstatus("success_update", displayname=displayname)
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
@@ -280,18 +280,18 @@ def main():
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
-                output.printstatus("ace_opt_add", mod[1])
+                output.printstatus("ace_opt_add", displayname=mod[1])
             # Steam Workshop
             if mod[0] == "steam" and enabled_sources["workshop"]:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
-                output.printstatus("steambag_add", mod[1])
+                output.printstatus("steambag_add", displayname=mod[1])
 
     # Steam Workshop
     if args.workshop_reset:
         output.printstatus("success_removed",
-                           "/home/arma3/steamcmd/steamapps/"
-                           + "workshop/appworkshop_107410.acf")
+                           displayname=("/home/arma3/steamcmd/steamapps/"
+                                        + "workshop/appworkshop_107410.acf"))
         os.remove("/home/arma3/steamcmd/steamapps/"
                   + "workshop/appworkshop_107410.acf")  # make path relative
 
@@ -349,13 +349,16 @@ def main():
             for i, _ in enumerate(workshop_ids):
                 if not os.path.isdir(dirs["steamdownload"] + "/"
                                      + workshop_ids[i]):
-                    output.printstatus("err_not_exist", workshop_names[i])
-                    output.printstatus("err_steam", workshop_ids[i])
+                    output.printstatus("err_not_exist",
+                                       displayname=workshop_names[i])
+                    output.printstatus("err_steam",
+                                       displayname=workshop_ids[i])
                     is_failed = True
                     continue
                 if os.path.islink(dirs["repo"] + "/@" + workshop_names[i]):
-                    output.printstatus("is_linked", dirs["repo"] + "/@"
-                                       + workshop_names[i])
+                    output.printstatus("is_linked",
+                                       displayname=(dirs["repo"] + "/@"
+                                                    + workshop_names[i]))
                     continue
 
                 output.debug("create symlink " + dirs["repo"] + "/@"
@@ -364,13 +367,14 @@ def main():
                              + "/" + workshop_ids[i])
                 os.symlink(dirs["steamdownload"] + "/" + workshop_ids[i],
                            dirs["repo"] + "/@" + workshop_names[i])
-                output.printstatus(2, workshop_names[i])
-            output.printstatus(2, "Steam Workshop")
+                output.printstatus("success_linking",
+                                   displayname=workshop_names[i])
             if is_failed:
                 sys.stdout.write("Workshop Update seems to have failed.")
                 out = input("Try Again? (y/N)")
                 if out.upper() == "Y":
                     is_failed = False
+            output.printstatus(2, displayname="Steam Workshop")
 
     # ace_optionals
     if args.update and enabled_sources["ace_optionals"]:
@@ -386,7 +390,7 @@ def main():
                 output.debug("found " + file)
                 pls_copy(output, file, dirs["mods"] + "/@ace_optionals/addons/"
                          + os.path.basename(file))
-        output.printstatus("success_update", "@ace_optionals")
+        output.printstatus("success_update", displayname="@ace_optionals")
 
     # make apache like our mods
     if args.update and False:
