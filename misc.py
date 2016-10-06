@@ -2,7 +2,7 @@
 import os
 import glob
 import shutil
-from requests import get
+import requests
 from tqdm import tqdm
 
 
@@ -13,7 +13,7 @@ def download(output, url, file_name, new_line=False):
     #file_size = urllib2.urlopen(url).headers["Content-Length"]
     file_size = requests.head(url).headers.get('content-length', None)
     with open(file_name, "wb") as download_file:
-        response = get(url, stream=True)
+        response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
             for data in tqdm(response.iter_content(), file_name, file_size):
                 output.write(data)
