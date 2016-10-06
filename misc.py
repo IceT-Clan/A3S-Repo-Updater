@@ -9,7 +9,8 @@ from EscapeAnsi import EscapeAnsi as ansi_escape
 
 
 
-def download(output, url, file_name, displayname, new_line=False):
+def download(output, url, file_name, displayname, new_line=False, \
+             hide_after=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
     cool_text = "\r" + "[ " + ansi_escape.F_L_YELLOW + "WAIT" \
@@ -20,8 +21,9 @@ def download(output, url, file_name, displayname, new_line=False):
     with open(file_name, "wb") as download_file:
         response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
-            for data in tqdm(response.iter_content(1024), cool_text, file_size,
-                             unit="MB", unit_scale=False):
+            for data in tqdm(response.iter_content(1024), cool_text,
+                             file_size / 1024, unit="MB", unit_scale=True,
+                             leave=hide_after):
                 download_file.write(data)
         # download_file.write(response.content)
     print("\b")

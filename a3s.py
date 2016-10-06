@@ -160,7 +160,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         output.printstatus("updating", displayname)
         download(output, url, "/tmp/" + displayname + ".tmp", displayname,
-                 True)
+                 True, True)
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
