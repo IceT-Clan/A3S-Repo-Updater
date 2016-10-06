@@ -11,18 +11,18 @@ from tqdm import tqdm
 def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
-    #file_size = urllib2.urlopen(url).headers["Content-Length"]
+    # file_size = urllib2.urlopen(url).headers["Content-Length"]
     # file_size = requests.head(url, headers={'Accept-Encoding': 'identity'})
     # file_size = file_size.headers.get('content-length', None)
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = file_size.decode("UTF-8")
-    output.debug("Length: " + file_size)
+    # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
-            for data in tqdm(response.iter_content(), file_name):
+            for data in tqdm(response.iter_content(), file_name, file_size):
                 download_file.write(data)
-        #download_file.write(response.content)
+        # download_file.write(response.content)
 
 
 def link_to(output, src, dst, name):
