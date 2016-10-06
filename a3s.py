@@ -175,7 +175,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
-        output.debug("File is :" + header)
 
         # only continue if file type is an archive
         if "archive" not in header:

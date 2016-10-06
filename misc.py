@@ -21,9 +21,10 @@ def download(output, url, file_name, displayname, new_line=False):
         response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
             for data in tqdm(response.iter_content(1024), cool_text, file_size,
-                             unit="MB", unit_scale=True):
+                             unit="MB", unit_scale=False):
                 download_file.write(data)
         # download_file.write(response.content)
+    sys.stdout.write("\b")
 
 
 def link_to(output, src, dst, name):
