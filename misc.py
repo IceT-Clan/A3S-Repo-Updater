@@ -2,7 +2,6 @@
 import os
 import glob
 import shutil
-import urllib2
 from requests import get
 from tqdm import tqdm
 
