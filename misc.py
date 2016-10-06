@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
-    output.debug("download " + url + " as " + file_name, new_line)
+    output.debug("download " + url + " as " + file_name, add_newline=new_line)
     with open(file_name, "wb") as download_file:
         response = get(url, stream=True)
         with open('output.bin', 'wb') as output:
