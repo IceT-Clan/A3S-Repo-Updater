@@ -81,7 +81,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         zipname = file_format.replace("$version", new_version)
         savedfile = displayname + ".zip"
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-        download("https://github.com/" + github_loc +
+        download(output, "https://github.com/" + github_loc +
                  "/releases/download/" + new_tag + "/" + zipname,
                  savedfile)
 
@@ -143,7 +143,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         savedfile = displayname + ".archive"
 
         output.printstatus("updating", displayname)
-        download(url, "/tmp/" + displayname + ".tmp")
+        download(output, url, "/tmp/" + displayname + ".tmp")
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
@@ -153,7 +153,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                     versions.append(line)
             versions.sort(reverse=True)
             new_version = versions[0]
-        download(os.path.join(url, new_version), savedfile)
+        download(output, os.path.join(url, new_version), savedfile)
 
         # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
@@ -255,7 +255,6 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    global output
     output = console.Output(args.debug)
     output.debug("enabled")
 

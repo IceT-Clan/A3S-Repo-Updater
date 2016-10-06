@@ -6,9 +6,9 @@ from requests import get
 import console
 
 
-def download(url, file_name, new_line=False):
+def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
-    console.Output.debug("download " + url + " as " + file_name, new_line)
+    output.debug("download " + url + " as " + file_name, new_line)
     with open(file_name, "wb") as download_file:
         response = get(url)
         download_file.write(response.content)
