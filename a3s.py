@@ -34,7 +34,9 @@ def updater_update(output):
     output.debug("current branch: " + u_git.branch())
     if not u_git.branch_name == branch:
         u_git.checkout(branch)
-    u_git.pull()
+
+    #! change to pull or something to preserve local repo.cfg changes
+    u_git.fetch()
 
 
 
