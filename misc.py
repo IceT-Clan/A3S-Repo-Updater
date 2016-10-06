@@ -30,9 +30,9 @@ def download(output, url, file_name, displayname, new_line=False, \
             response = requests.get(url)
             download_file.write(response.content)
     if not hide:
-        print('\x1b[2A', end="")
+        print('\x1b[1A', end="")
         for _ in range(99):
-            print('\x1b[1C', end="")
+            print('\x1b[1B', end="")
 
 
 def link_to(output, src, dst, name):
