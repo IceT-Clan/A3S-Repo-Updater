@@ -20,8 +20,8 @@ def download(output, url, file_name, displayname, new_line=False):
     with open(file_name, "wb") as download_file:
         response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
-            for data in tqdm(response.iter_content(1024) * 1024, cool_text, file_size,
-                             unit="MB", unit_scale=True) / 1024:
+            for data in tqdm(response.iter_content(1024), cool_text, file_size,
+                             unit="MB", unit_scale=True):
                 download_file.write(data)
         # download_file.write(response.content)
 
