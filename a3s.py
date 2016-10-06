@@ -26,6 +26,18 @@ from misc import (download, gglob, link_to, pls_copy, read_config, get_dirs,
                   rm_all_symlinks, get_sources)
 
 
+def updater_update(output):
+    """update the updater"""
+    branch = "development"
+    u_git = git.Git("./")
+    u_git.init()
+    output.debug("current branch: " + u_git.branch())
+    if not u_git.branch_name == branch:
+        u_git.checkout(branch)
+    u_git.pull()
+
+
+
 def update(output, dirs, enabled_sources, mod, **kwargs):
     """update mods with given information"""
     # Manual downloaded Mods
