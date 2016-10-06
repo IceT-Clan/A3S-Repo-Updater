@@ -1,9 +1,12 @@
 """ secret stuff"""
 import sys
+import EscapeAnsi as ansi_escape
 
 
 def android():
+
     """android ASCII art"""
+    sys.stdout.write(ansi_escape.EscapeAnsi.F_GREEN)
     sys.stdout.write("\t             I                I             \n")
     sys.stdout.write("\t              I      ++      I              \n")
     sys.stdout.write("\t               IIIIIIIIIIIIII               \n")
@@ -35,3 +38,4 @@ def android():
     sys.stdout.write("\t             IIIIII      IIIIII             \n")
     sys.stdout.write("\t             IIIIII      IIIIII             \n")
     sys.stdout.write("\t               I:          ~I               \n")
+    sys.stdout.write(ansi_escape.EscapeAnsi.RESET)
