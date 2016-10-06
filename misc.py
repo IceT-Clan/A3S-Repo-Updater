@@ -19,7 +19,7 @@ def download(output, url, file_name, displayname, new_line=False, \
     file_size = int(file_size.decode("UTF-8"))
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
-        if hide:
+        if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
                 for data in tqdm(response.iter_content(1024), cool_text,
