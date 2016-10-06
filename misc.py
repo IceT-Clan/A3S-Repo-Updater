@@ -3,13 +3,17 @@ import os
 import glob
 import shutil
 from requests import get
+from tqdm import tqdm
 
 
 def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, new_line)
     with open(file_name, "wb") as download_file:
-        response = get(url)
+        response = get(url, stream=True)
+        with open('output.bin', 'wb') as output:
+            for data in tqdm(response.iter_content()):
+                output.write(data)
         download_file.write(response.content)
 
 
