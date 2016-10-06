@@ -101,7 +101,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
         download(output, "https://github.com/" + github_loc +
                  "/releases/download/" + new_tag + "/" + zipname,
-                 savedfile)
+                 savedfile, displayname)
 
         # extract <savedfile>
         Archive(savedfile).extractall(dirs["mods"])
@@ -159,7 +159,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         savedfile = displayname + ".archive"
 
         output.printstatus("updating", displayname)
-        download(output, url, "/tmp/" + displayname + ".tmp", True)
+        download(output, url, "/tmp/" + displayname + ".tmp", displayname,
+                 True)
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
@@ -169,7 +170,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                     versions.append(line)
             versions.sort(reverse=True)
             new_version = versions[0]
-        download(output, os.path.join(url, new_version), savedfile)
+        download(output, os.path.join(url, new_version), savedfile,
+                 displayname)
 
         # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
