@@ -2,17 +2,20 @@
 import os
 import glob
 import shutil
+import urllib2
 from requests import get
 from tqdm import tqdm
+
 
 
 def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
+    file_size = urllib2.urlopen(url).headers["Content-Length"]
     with open(file_name, "wb") as download_file:
         response = get(url, stream=True)
         with open('output.bin', 'wb') as output:
-            for data in tqdm(response.iter_content()):
+            for data in tqdm(response.iter_content(), file_name, file_size):
                 output.write(data)
         download_file.write(response.content)
 

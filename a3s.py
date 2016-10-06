@@ -41,8 +41,7 @@ def updater_update(output):
         output.debug("Exception:" + exp)
         raise exp
     else:
-        u_git.fetch()
-    #! change to pull or something to preserve local repo.cfg changes
+        u_git.stash()
 
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
