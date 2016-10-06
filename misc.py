@@ -3,7 +3,6 @@ import os
 import glob
 import shutil
 from requests import get
-import console
 
 
 def download(output, url, file_name, new_line=False):
