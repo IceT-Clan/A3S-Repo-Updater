@@ -35,9 +35,14 @@ def updater_update(output):
     if not u_git.branch_name == branch:
         u_git.checkout(branch)
 
+    try:
+        u_git.pull()
+    except Exception as exp:
+        output.debug("Exception:" + exp)
+        raise exp
+    else:
+        u_git.fetch()
     #! change to pull or something to preserve local repo.cfg changes
-    u_git.fetch()
-
 
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
