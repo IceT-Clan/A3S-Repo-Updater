@@ -24,7 +24,7 @@ def download(output, url, file_name, displayname, new_line=False):
                              unit="MB", unit_scale=False):
                 download_file.write(data)
         # download_file.write(response.content)
-    sys.stdout.write("\b")
+    print("\b")
 
 
 def link_to(output, src, dst, name):
