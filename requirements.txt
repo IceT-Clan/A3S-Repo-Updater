@@ -11,3 +11,4 @@ pyunpack
 requests
 python-magic
 tqdm
+urllib2
