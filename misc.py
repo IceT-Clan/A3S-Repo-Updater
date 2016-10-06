@@ -11,13 +11,15 @@ def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
     #file_size = urllib2.urlopen(url).headers["Content-Length"]
-    file_size = requests.head(url).headers.get('content-length', None)
+    file_size = requests.head(url, headers={'Accept-Encoding': 'identity'})
+    file_size = file_size.headers.get('content-length', None)
+    output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         response = requests.get(url, stream=True)
         with open('output.bin', 'wb') as output:
             for data in tqdm(response.iter_content(), file_name, file_size):
-                output.write(data)
-        download_file.write(response.content)
+                download_file.write(data)
+        #download_file.write(response.content)
 
 
 def link_to(output, src, dst, name):
