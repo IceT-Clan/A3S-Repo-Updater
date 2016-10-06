@@ -23,11 +23,13 @@ def download(output, url, file_name, displayname, new_line=False, \
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
                 for data in tqdm(response.iter_content(1024), cool_text,
-                                 file_size / 1024, unit="MB", unit_scale=True):
+                                 file_size / 1024, unit="MB", unit_scale=True,
+                                 leave=True):
                     download_file.write(data)
         else:
             response = requests.get(url)
             download_file.write(response.content)
+    print('\x1b[1A')
 
 
 def link_to(output, src, dst, name):
