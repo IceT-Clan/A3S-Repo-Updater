@@ -3,7 +3,8 @@
 
 class EscapeAnsi:
     """http://misc.flogisoft.com/bash/tip_colors_and_formatting
-       ANSI/VT100 colors and formats"""
+       ANSI/VT100 colors and formats
+       http://ascii-table.com/ansi-escape-sequences.php"""
 
     # formatting
     BOLD = '\033[1m'

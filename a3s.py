@@ -330,7 +330,7 @@ def main():
                 cursor_up_one = '\x1b[1A'
                 erase_line = '\x1b[2K'
                 for i in range(3):
-                    print(cursor_up_one + erase_line + cursor_up_one)
+                    print(cursor_up_one + erase_line, end="")
 
                 # add stuff 'cause steam
                 steambag.write("@nCSClientRateLimitKbps 50000\n")
