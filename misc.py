@@ -33,7 +33,7 @@ def download(output, url, file_name, displayname, new_line=False, \
     if not hide:
         print('\x1b[1A', end="")
         for _ in range(99):
-            print('\x1b[1B', end="")
+            print('\x1b[1C', end="")
 
 
 def link_to(output, src, dst, name):
