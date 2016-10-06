@@ -15,6 +15,7 @@ def download(output, url, file_name, new_line=False):
     # file_size = requests.head(url, headers={'Accept-Encoding': 'identity'})
     # file_size = file_size.headers.get('content-length', None)
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
+    file_size = file_size.decode("UTF-8")
     output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         response = requests.get(url, stream=True)
