@@ -153,7 +153,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         savedfile = displayname + ".archive"
 
         output.printstatus("updating", displayname)
-        download(output, url, "/tmp/" + displayname + ".tmp")
+        download(output, url, "/tmp/" + displayname + ".tmp", True)
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
@@ -202,8 +202,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         if path.endswith("/"):
             path = path[:-1]
 
-        output.debug("wget " + url)
-        os.system("wget -qq -r " + url)
+        output.debug("wget " + url, True)
+        os.system("wget -q -r " + url)
         output.debug("copytree " + path + " --> " + dirs["mods"] + "/@" +
                      displayname)
         distutils.dir_util.copy_tree(path, dirs["mods"] + "/" +
