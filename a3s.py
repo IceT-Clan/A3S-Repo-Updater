@@ -319,7 +319,7 @@ def main():
             is_failed = False
             with open("/tmp/steambag.tmp", "wb") as steambag:
                 output.printstatus("do_workshop")
-                login = input()("Login: ")
+                login = input("Login: ")
                 passwd = getpass.getpass()
                 steamguard = input("Steam Guard Code: ")
 
