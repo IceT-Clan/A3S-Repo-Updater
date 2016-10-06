@@ -14,7 +14,8 @@ def download(output, url, file_name, displayname, new_line=False, \
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
     cool_text = "\r" + "[ " + ansi_escape.F_L_YELLOW + "WAIT" \
-                + ansi_escape.RESET + " ] " + "downloading... " + displayname
+                + ansi_escape.RESET + " ] " + "downloading "
+                + displayname + "..."
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = int(file_size.decode("UTF-8"))
     # output.debug("Length: " + file_size)

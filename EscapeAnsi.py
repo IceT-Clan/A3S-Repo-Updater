@@ -74,6 +74,9 @@ class EscapeAnsi:
     F_COLOR_INIT = '\033[38;5;'
     B_COLOR_INIT = '\033[48;5;'
 
+    ERASE_DISPLAY = '\033[2J'
+    ERASE_LINE = '\033[K'
+
     # 256 foreground colors
     def f_color(self, color_number):
         """print foreground color switch"""
@@ -83,3 +86,24 @@ class EscapeAnsi:
     def b_color(self, color_number):
         """print background color switch"""
         return self.B_COLOR_INIT + color_number + 'm'
+
+    def cursor_up(self, lines):
+        """print cursor up"""
+        pass
+
+    def cursor_down(self, lines):
+        """print cursor down"""
+        pass
+
+    def cursor_left(self, columns):
+        """print cursor left"""
+        pass
+
+    def cursor_right(self, columns):
+        """print cursor right"""
+        pass
+
+    def set_cursor(self, line, column, alternative=False):
+        """print set cursor"""
+        pass
+
