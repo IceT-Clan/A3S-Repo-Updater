@@ -80,30 +80,31 @@ class EscapeAnsi:
     # 256 foreground colors
     def f_color(self, color_number):
         """print foreground color switch"""
-        return self.F_COLOR_INIT + color_number + 'm'
+        return ''.join([self.F_COLOR_INIT, color_number, 'm'])
 
     # 256 background colors
     def b_color(self, color_number):
         """print background color switch"""
-        return self.B_COLOR_INIT + color_number + 'm'
+        return ''.join([self.B_COLOR_INIT, color_number, 'm'])
 
-    def cursor_up(self, lines):
+    def cursor_up(lines):
         """print cursor up"""
-        pass
+        return ''.join(['\033[', lines, 'A'])
 
-    def cursor_down(self, lines):
+    def cursor_down(lines):
         """print cursor down"""
-        pass
+        return ''.join([['\033[', lines, 'B']])
 
-    def cursor_left(self, columns):
+    def cursor_left(columns):
         """print cursor left"""
-        pass
+        return ''.join([['\033[', columns, 'C']])
 
-    def cursor_right(self, columns):
+    def cursor_right(columns):
         """print cursor right"""
-        pass
+        return ''.join([['\033[', columns, 'D']])
 
-    def set_cursor(self, line, column, alternative=False):
+    def set_cursor(line, column, alternative=False):
         """print set cursor"""
-        pass
-
+        if not alternative:
+            return ''.join([['\033[', line, ';', column, 'H']])
+        return ''.join([['\033[', line, ';', column, 'f']])
