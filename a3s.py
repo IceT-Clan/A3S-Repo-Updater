@@ -19,7 +19,7 @@ import git
 import magic
 from pyunpack import Archive
 # Import Locals
-import EscapeAnsi
+from EscapeAnsi import EscapeAnsi as ansi_escape
 import console
 import secret
 from misc import (download, gglob, link_to, pls_copy, read_config, get_dirs,
@@ -172,6 +172,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             new_version = versions[0]
         download(output, os.path.join(url, new_version), savedfile,
                  displayname)
+        print(ansi_escape.ERASE_LINE, end="")
 
         # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
