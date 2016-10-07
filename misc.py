@@ -25,7 +25,7 @@ def download(output, url, file_name, displayname, new_line=False, \
             with open('output.bin', 'wb') as output:
                 for data in tqdm(response.iter_content(int(file_size / 1000)),
                                  cool_text,
-                                 int(file_size / file_size / 1000),
+                                 1/2000,
                                  unit="MB", unit_scale=True,
                                  leave=True):
                     download_file.write(data)
