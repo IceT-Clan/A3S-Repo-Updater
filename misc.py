@@ -24,7 +24,7 @@ def download(output, url, file_name, displayname, new_line=False, \
                   "GB": 1024 * 1024 * 1024,
                   "TB": 1024 * 1024 * 1024 * 1024,
                   "PT": 1024 * 1024 * 1024 * 1024 * 1024}
-    my_data_size = "MB"
+    my_data_size = "GB"
     chunk_size = data_sizes[my_data_size]
 
     output.debug("file_size:" + repr(file_size))
@@ -37,7 +37,7 @@ def download(output, url, file_name, displayname, new_line=False, \
             with open('output.bin', 'wb') as output:
                 for data in tqdm(response.iter_content(chunk_size),
                                  cool_text,
-                                 file_size,
+                                 file_size / chunk_size,
                                  unit=my_data_size, unit_scale=True,
                                  leave=True):
                     download_file.write(data)
