@@ -23,7 +23,7 @@ def download(output, url, file_name, displayname, new_line=False, \
         if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
-                for data in tqdm(response.iter_content(int(file_size / 1000),
+                for data in tqdm(response.iter_content(int(file_size / 1000)),
                                  cool_text,
                                  int(file_size / file_size / 1000),
                                  unit="MB", unit_scale=True,
