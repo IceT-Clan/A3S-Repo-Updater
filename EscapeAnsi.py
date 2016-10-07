@@ -108,3 +108,4 @@ class EscapeAnsi:
         if not alternative:
             return ''.join([['\033[', line, ';', column, 'H']])
         return ''.join([['\033[', line, ';', column, 'f']])
+
