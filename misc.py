@@ -24,18 +24,21 @@ def download(output, url, file_name, displayname, new_line=False, \
                   "GB": 1024 * 1024 * 1024,
                   "TB": 1024 * 1024 * 1024 * 1024,
                   "PT": 1024 * 1024 * 1024 * 1024 * 1024}
-    my_data_size = "GB"
+    for size in data_sizes:
+        if file_size / size <= 1024:
+            my_data_size = size
     chunk_size = data_sizes[my_data_size]
 
     output.debug("file_size:" + repr(file_size))
     output.debug("chunk_size:" + repr(chunk_size))
+    output.debug("my_data_size:" + repr(my_data_size))
 
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
-                for data in tqdm(response.iter_content( 1024 * 1024 ),
+                for data in tqdm(response.iter_content(my_data_size),
                                  cool_text,
                                  file_size / chunk_size,
                                  unit=my_data_size, unit_scale=True,
