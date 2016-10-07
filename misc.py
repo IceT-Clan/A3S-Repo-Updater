@@ -18,7 +18,13 @@ def download(output, url, file_name, displayname, new_line=False, \
                 + displayname + "..."
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = int(file_size.decode("UTF-8"))
-    chunk_size = 1024 * 1024
+    data_sizes = {"B": 1,
+                  "KB": 1024,
+                  "MB": 1024 * 1024,
+                  "GB": 1024 * 1024 * 1024,
+                  "TB": 1024 * 1024 * 1024 * 1024,
+                  "PT": 1024 * 1024 * 1024 * 1024 * 1024}
+    chunk_size = data_sizes["MB"]
 
     output.debug("file_size:" + repr(file_size))
     output.debug("chunk_size:" + repr(chunk_size))
