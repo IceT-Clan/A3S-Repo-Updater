@@ -35,7 +35,7 @@ def download(output, url, file_name, displayname, new_line=False, \
         if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
-                for data in tqdm(response.iter_content(chunk_size),
+                for data in tqdm(response.iter_content( 1024 * 1024 ),
                                  cool_text,
                                  file_size / chunk_size,
                                  unit=my_data_size, unit_scale=True,
