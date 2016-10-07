@@ -30,7 +30,7 @@ def download(output, url, file_name, displayname, new_line=False, \
             with open('output.bin', 'wb') as output:
                 for data in tqdm(response.iter_content(chunk_size),
                                  cool_text,
-                                 file_size,
+                                 file_size / chunk_size,
                                  unit="MB", unit_scale=True,
                                  leave=True):
                     download_file.write(data)
