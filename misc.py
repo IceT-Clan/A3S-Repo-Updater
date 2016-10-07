@@ -25,7 +25,7 @@ def download(output, url, file_name, displayname, new_line=False, \
                   "TB": 1024 * 1024 * 1024 * 1024,
                   "PT": 1024 * 1024 * 1024 * 1024 * 1024}
     for _, index in enumerate(data_sizes):
-        if file_size / data_sizes[index] <= 1024:
+        if file_size / data_sizes[index] >= 1024:
             my_data_size = index #data_sizes[index]
     chunk_size = data_sizes[my_data_size]
 
