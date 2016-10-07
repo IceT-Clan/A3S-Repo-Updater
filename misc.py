@@ -18,14 +18,17 @@ def download(output, url, file_name, displayname, new_line=False, \
                 + displayname + "..."
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = int(file_size.decode("UTF-8"))
+    output.debug("file_size:" + file_size)
+    chunk_size = 1024
+
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
-                for data in tqdm(response.iter_content(int(file_size / 1000)),
+                for data in tqdm(response.iter_content(chunk_size),
                                  cool_text,
-                                 1/1000,
+                                 file_size,
                                  unit="MB", unit_scale=True,
                                  leave=True):
                     download_file.write(data)
