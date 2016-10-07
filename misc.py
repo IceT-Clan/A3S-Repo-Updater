@@ -29,9 +29,9 @@ def download(output, url, file_name, displayname, new_line=False, \
             my_data_size = index #data_sizes[index]
     chunk_size = data_sizes[my_data_size]
 
-    output.debug("file_size:" + repr(file_size) + type(file_size))
-    output.debug("chunk_size:" + repr(chunk_size) + type(chunk_size))
-    output.debug("my_data_size:" + repr(my_data_size) + type(my_data_size))
+    output.debug("file_size:" + repr(file_size) + repr(type(file_size)))
+    output.debug("chunk_size:" + repr(chunk_size) + repr(type(chunk_size)))
+    output.debug("my_data_size:" + repr(my_data_size) + repr(type(my_data_size)))
 
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
