@@ -18,8 +18,10 @@ def download(output, url, file_name, displayname, new_line=False, \
                 + displayname + "..."
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = int(file_size.decode("UTF-8"))
-    output.debug("file_size:" + repr(file_size))
     chunk_size = 1024
+
+    output.debug("file_size:" + repr(file_size))
+    output.debug("chunk_size:" + repr(chunk_size))
 
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
