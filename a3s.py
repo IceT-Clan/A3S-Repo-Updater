@@ -225,7 +225,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
-    ansi_escape = EscapeAnsi.EscapeAnsi()
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
