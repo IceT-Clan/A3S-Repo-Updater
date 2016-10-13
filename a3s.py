@@ -2,7 +2,7 @@
 """Python-powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
 # Import Built-Ins
-import glob
+from glob import glob as gglob
 import os
 import shutil
 import sys
