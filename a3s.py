@@ -2,7 +2,7 @@
 """Python-powered Arma3 Mod Downloader for Arma3Sync Repositorys"""
 
 # Import Built-Ins
-import glob
+from glob import glob as gglob
 import os
 import shutil
 import sys
@@ -84,10 +84,11 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         new_version = new_tag
         if new_tag.startswith("v"):
             new_version = new_tag[1:]
-        if new_tag == cur_version and not kwargs["skip_version"]:
-            # No update needed
-            output.printstatus("is_up_to_date", displayname)
-            return
+        if not kwargs["skip_version"]:
+            if new_tag == cur_version and not kwargs["skip_version"]:
+                # No update needed
+                output.printstatus("is_up_to_date", displayname)
+                return
 
         # Remove old Mod
         output.debug("removing " +
@@ -116,10 +117,11 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
-        output.printstatus("success_update", displayname)
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
+
+        output.printstatus("success_update", displayname)
 
     # Github
     elif mod[0] == "github" and enabled_sources["github"]:
@@ -149,30 +151,46 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
 
-    # download html file; grep regex; get biggest number;
-    #  download found file; extract;
+    # Curl Biggest Archive
     elif mod[0] == "curl_biggest_archive" and enabled_sources["curl"]:
         displayname = mod[1]
         url = mod[2]
-        curl_version = mod[3]
+        version_regex = mod[3]
+        cur_version = mod[4]
         new_version = str()
-        savedfile = displayname + ".archive"
+        savedfile.join([displayname, ".archive"])
 
         output.printstatus("updating", displayname)
         download(output, url, "/tmp/" + displayname + ".tmp", displayname,
                  True, True)
+
+        # get version from downloaded file
         with open("/tmp/" + displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
-                line = re.findall(curl_version, line)
+                line = re.findall(version_regex, line)
                 if line:
                     line = line[0].split('"')[0]
                     versions.append(line)
             versions.sort(reverse=True)
             new_version = versions[0]
+
+        # test if we actually want to update
+        if not kwargs["skip_version"]:
+            versions = list() # clear your stuff before using it
+            console.Output(True).debug("should be cleared: " + versions)
+            versions.append(new_version)
+            versions.append(cur_version)
+            versions.sort(reverse=True)
+            if new_version == versions[0]:
+                # No update needed
+                output.printstatus("is_up_to_date", displayname)
+                return
+
+        # download newest version
         download(output, os.path.join(url, new_version), savedfile,
                  displayname)
-        print(ansi_escape.ERASE_LINE, end="")
+        print(ansi_escape.ERASE_LINE, end="") # needed: fixes visual bug
 
         # get file type of <savedfile>
         header = magic.from_file(savedfile).split(",")[0]
@@ -183,7 +201,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             return
         output.debug("found file type '" + header + "' for file " + savedfile)
 
-        if "Java" in header:
+        if "Java" in header: # yes, we're testing for this
             secret.android()
             return
         output.debug("inflating " + savedfile)
@@ -195,10 +213,18 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         os.remove("/tmp/" + displayname + ".tmp")
         os.remove(savedfile)
 
-        output.printstatus("success_update", displayname)
+        # Write new version to config
+        old_line = ",".join([str(x) for x in mod])
+        new_line = old_line.replace(cur_version, new_version)
+        for line in fileinput.input("repo.cfg", inplace=1):
+            if old_line in line:
+                line = line.replace(old_line, new_line)
+            sys.stdout.write(line)
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
+
+        output.printstatus("success_update", displayname)
 
     elif mod[0] == "curl_folder" and enabled_sources["curl"]:
         displayname = mod[1]
@@ -286,7 +312,11 @@ def main():
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)
-
+    
+    # lets go somewhere else so we can cleanup easier
+    os.makedirs("_a3s", exist_ok=True)
+    os.chdir("_a3s")
+    
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
@@ -311,7 +341,7 @@ def main():
                            "/home/arma3/steamcmd/steamapps/" +
                            "workshop/appworkshop_107410.acf")
         os.remove("/home/arma3/steamcmd/steamapps/" +
-                  "workshop/appworkshop_107410.acf")  # make path relative
+                  "workshop/appworkshop_107410.acf")  #! make path relative
 
     if args.update and enabled_sources["workshop"]:
         is_failed = True
@@ -411,6 +441,10 @@ def main():
             if not root == ".a3s":
                 os.chmod(root, 0o755)
         return
+
+    # and finally cleanup after ourself
+    os.chdir("..")
+    os.rmdir("_a3s")
 
 
 if __name__ == "__main__":
