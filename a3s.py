@@ -105,6 +105,21 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  "/releases/download/" + new_tag + "/" + zipname,
                  savedfile, displayname)
 
+        # get file type of <savedfile>
+        header = magic.from_file(savedfile).split(",")[0]
+
+        # only continue if file type is an archive
+        if "archive" not in header:
+            output.printstatus("err_skip", displayname)
+            output.printstatus("err_not_valid", "archive", displayname)
+            return
+        output.debug("found file type '" + header + "' for file " + savedfile)
+
+        if "Java" in header: # yes, we're testing for this
+            secret.android()
+            return
+        output.debug("inflating " + savedfile)
+
         # extract <savedfile>
         Archive(savedfile).extractall(dirs["mods"])
 
