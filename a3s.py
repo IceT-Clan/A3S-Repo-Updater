@@ -106,7 +106,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
-            output.printstatus("err_not_valid", "archive", displayname)
+            output.printstatus("err_not_valid", displayname, "archive")
             return
 
         output.debug("inflating " + savedfile)
@@ -151,7 +151,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             modrepo = git.Repo.clone_from("https://github.com/" +
                                           github_loc + ".git",
                                           displayname)
-            for mod_file in glob.glob(displayname + r"/@*"):
+            for mod_file in gglob(displayname + r"/@*"):
                 shutil.move(mod_file, dirs["mods"] + "/" + displayname)
         output.printstatus("success_update", displayname)
 
@@ -201,7 +201,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
-            output.printstatus("err_not_valid", "archive", displayname)
+            output.printstatus("err_not_valid", displayname, "archive")
             return
         output.debug("inflating " + savedfile)
 
