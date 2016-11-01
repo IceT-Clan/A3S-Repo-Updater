@@ -10,7 +10,7 @@
 
 \begin{document}
 \lstset{%
-	frame=single
+	%frame=single
 	backgroundcolor=\color[HTML]{dddddd}
 }
 \begin{titlepage}
@@ -24,19 +24,24 @@
 	
 	\part{Introduction}
 		\section{What is this?}
-			This is the A3S Repo Updater. Or Arma3Sync-Repository Updater
-		\section{Why is this a thing?}
-			Because creating Repositories for Arma3Sync is enough of a hassle. So I made updating the Mods more or less automatic, but definitely easier.	
+			This is the A3S Repo Updater. Or Arma3Sync-Repository Updater.\newline
+			I made this because creating Repositories for Arma3Sync is enough of a hassle. So I made updating the Mods more or less automatic, but definitely easier.	\newline
+			You now can easily add mods to a config file or use the wizard wich also enables you to remove active mods and enable mods.
+		\section{How does this work?}
+			The mods get downloaded from the Steam Workshop, for wich you need a account with a valid Arma3 License, or from Github via cloning from master or using the latest download option.
+			You can also define a download location yourself.
 	\newpage
 	
 	\part{A3S-Repository Updater}
 		\section{Install A3S-Repo Updater}
-			TODO
+			$ $
 			\subsection{Requirements}
 				\begin{itemize}[noitemsep]
 				\item python3
 				\item pip
 				\item git
+				\item Arma3Sync
+				\item SteamCMD
 				\end{itemize}
 
 			\subsection{Installation}
