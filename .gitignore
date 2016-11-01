@@ -8,3 +8,5 @@
 *.synctex.gz
 *.toc
 *.log
+__pycache
+_a3s
