@@ -91,12 +91,6 @@ def pls_copy(output, src, dst):
     else:
         output.printstatus("err_not_exist", src)
 
-
-def gglob(pathname):
-    """yes, glob.glob is too long"""
-    return glob.glob(pathname)
-
-
 def get_sources(args):
     """get all source flags from args and return as dict"""
     enabled_sources = {"github": True,
