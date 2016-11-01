@@ -4,7 +4,7 @@ import glob
 import shutil
 import subprocess
 import requests
-from tqdm import tqdm
+import magic
 from EscapeAnsi import EscapeAnsi as ansi_escape
 
 
@@ -122,3 +122,20 @@ def rm_all_symlinks(directory):
             else:
                 # If it's not a symlink we're not interested.
                 continue
+
+def check_filetype(filename, filetype):
+    """check if filetype of <filename> is indeed <filetype>"""
+    # get file type
+    header = magic.from_file(filename).split(",")[0]
+
+    # only continue if file type is an archive
+    if filetype not in header:
+        output.printstatus("err_skip", displayname)
+        output.printstatus("err_not_valid", filetype, displayname)
+        return False
+
+    if "Java" in header: # yes, we're testing for this
+        secret.android()
+        return False
+    output.debug("found file type '" + header + "' for file " + savedfile)
+    return True
