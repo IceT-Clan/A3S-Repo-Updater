@@ -312,7 +312,11 @@ def main():
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)
-
+    
+    # lets go somewhere else so we can cleanup easier
+    os.makedirs("_a3s", exist_ok=True)
+    os.chdir("_a3s")
+    
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
@@ -337,7 +341,7 @@ def main():
                            "/home/arma3/steamcmd/steamapps/" +
                            "workshop/appworkshop_107410.acf")
         os.remove("/home/arma3/steamcmd/steamapps/" +
-                  "workshop/appworkshop_107410.acf")  # make path relative
+                  "workshop/appworkshop_107410.acf")  #! make path relative
 
     if args.update and enabled_sources["workshop"]:
         is_failed = True
@@ -437,6 +441,10 @@ def main():
             if not root == ".a3s":
                 os.chmod(root, 0o755)
         return
+
+    # and finally cleanup after ourself
+    os.chdir("..")
+    os.rmdir("_a3s")
 
 
 if __name__ == "__main__":

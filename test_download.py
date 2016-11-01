@@ -1,7 +1,9 @@
+"""test download function"""
 import misc
 import console
 
-output = console.Output(True)
-url = "http://download.thinkbroadband.com/512MB.zip"
-savefile = "512MB.zip"
-download(output, url, savefile)
+OUTPUT = console.Output(True)
+URL = "http://download.thinkbroadband.com/512MB.zip"
+SAVEFILE = "512MB.zip"
+misc.download(OUTPUT, URL, SAVEFILE, SAVEFILE)
+print()

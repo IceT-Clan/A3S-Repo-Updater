@@ -18,15 +18,35 @@ def download(output, url, file_name, displayname, new_line=False, \
                 + displayname + "..."
     file_size = subprocess.check_output(["bash", "getURLength.sh", url])
     file_size = int(file_size.decode("UTF-8"))
+    data_sizes = {"B": 1,
+                  "KB": 1024,
+                  "MB": 1024 * 1024,
+                  "GB": 1024 * 1024 * 1024,
+                  "TB": 1024 * 1024 * 1024 * 1024,
+                  "PB": 1024 * 1024 * 1024 * 1024 * 1024}
+    if file_size < data_sizes["PB"]:
+        my_data_size = "PB"
+    if file_size < data_sizes["TB"]:
+        my_data_size = "TB"
+    if file_size < data_sizes["GB"]:
+        my_data_size = "GB"
+    if file_size < data_sizes["MB"]:
+        my_data_size = "MB"
+    chunk_size = data_sizes[my_data_size]
+
+    output.debug("file_size:" + repr(file_size) + repr(type(file_size)))
+    output.debug("chunk_size:" + repr(chunk_size) + repr(type(chunk_size)))
+    output.debug("my_data_size:" + repr(my_data_size) + repr(type(my_data_size)))
+
     # output.debug("Length: " + file_size)
     with open(file_name, "wb") as download_file:
         if not hide:
             response = requests.get(url, stream=True)
             with open('output.bin', 'wb') as output:
-                for data in tqdm(response.iter_content(file_size / 1000),
+                for data in tqdm(response.iter_content(my_data_size),
                                  cool_text,
-                                 file_size / file_size / 1000,
-                                 unit="MB", unit_scale=True,
+                                 file_size / chunk_size,
+                                 unit=my_data_size, unit_scale=True,
                                  leave=True):
                     download_file.write(data)
         else:
