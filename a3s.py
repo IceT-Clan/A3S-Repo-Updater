@@ -46,6 +46,7 @@ def updater_update(output):
 
 def update(output, dirs, enabled_sources, mod, **kwargs):
     """update mods with given information"""
+    config_location = "../repo.cfg"
     # Manual downloaded Mods
     if mod[0] == "manual":
         displayname = mod[1]
@@ -113,7 +114,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # Write new version to config
         old_line = ",".join([str(x) for x in mod])
         new_line = old_line.replace(cur_version, new_tag)
-        for line in fileinput.input("repo.cfg", inplace=1):
+        for line in fileinput.input(config_location, inplace=1):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
@@ -216,7 +217,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # Write new version to config
         old_line = ",".join([str(x) for x in mod])
         new_line = old_line.replace(cur_version, new_version)
-        for line in fileinput.input("repo.cfg", inplace=1):
+        for line in fileinput.input(config_location, inplace=1):
             if old_line in line:
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
