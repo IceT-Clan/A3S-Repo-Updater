@@ -4,3 +4,7 @@
 *.zip
 *.rar
 *.bin
+*.aux
+*.synctex.gz
+*.toc
+*.log
