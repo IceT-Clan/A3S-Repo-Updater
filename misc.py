@@ -124,7 +124,8 @@ def rm_all_symlinks(directory):
                 continue
 
 def check_filetype(filename, filetype):
-    """check if filetype of <filename> is indeed <filetype>"""
+    """check if filetype of <filename> is indeed <filetype>
+       write errors if not"""
     # get file type
     header = magic.from_file(filename).split(",")[0]
 

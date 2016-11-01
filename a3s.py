@@ -16,14 +16,13 @@ import argparse
 import fileinput
 # from ftplib import FTP
 import git
-import magic
 from pyunpack import Archive
 # Import Locals
 from EscapeAnsi import EscapeAnsi as ansi_escape
 import console
 import secret
 from misc import (download, link_to, pls_copy, read_config, get_dirs,
-                  rm_all_symlinks, get_sources)
+                  rm_all_symlinks, get_sources, check_filetype)
 
 
 def updater_update(output):
@@ -105,19 +104,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  "/releases/download/" + new_tag + "/" + zipname,
                  savedfile, displayname)
 
-        # get file type of <savedfile>
-        header = magic.from_file(savedfile).split(",")[0]
-
-        # only continue if file type is an archive
-        if "archive" not in header:
-            output.printstatus("err_skip", displayname)
-            output.printstatus("err_not_valid", "archive", displayname)
+        if not check_filetype(savedfile, "archive"):
             return
-        output.debug("found file type '" + header + "' for file " + savedfile)
 
-        if "Java" in header: # yes, we're testing for this
-            secret.android()
-            return
         output.debug("inflating " + savedfile)
 
         # extract <savedfile>
@@ -208,17 +197,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  displayname)
         print(ansi_escape.ERASE_LINE, end="") # needed: fixes visual bug
 
-        # get file type of <savedfile>
-        header = magic.from_file(savedfile).split(",")[0]
-
-        # only continue if file type is an archive
-        if "archive" not in header:
-            output.printstatus("err_not_valid", "archive", displayname)
-            return
-        output.debug("found file type '" + header + "' for file " + savedfile)
-
-        if "Java" in header: # yes, we're testing for this
-            secret.android()
+        if not check_filetype(savedfile, "archive"):
             return
         output.debug("inflating " + savedfile)
 
@@ -464,4 +443,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    gain()
