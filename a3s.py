@@ -105,6 +105,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  savedfile, displayname)
 
         if not check_filetype(savedfile, "archive"):
+            output.printstatus("err_skip", displayname)
+            output.printstatus("err_not_valid", "archive", displayname)
             return
 
         output.debug("inflating " + savedfile)
@@ -198,6 +200,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         print(ansi_escape.ERASE_LINE, end="") # needed: fixes visual bug
 
         if not check_filetype(savedfile, "archive"):
+            output.printstatus("err_skip", displayname)
+            output.printstatus("err_not_valid", "archive", displayname)
             return
         output.debug("inflating " + savedfile)
 

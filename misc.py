@@ -12,10 +12,6 @@ from EscapeAnsi import EscapeAnsi as ansi_escape
 def download(output, url, file_name, displayname, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
-    cool_text = "\r" + "[ " + ansi_escape.F_L_YELLOW + "WAIT" \
-                + ansi_escape.RESET + " ] " + "downloading " \
-                + displayname + "..."
-
     with open(file_name, "wb") as download_file:
         response = requests.get(url)
         download_file.write(response.content)
@@ -124,15 +120,12 @@ def rm_all_symlinks(directory):
                 continue
 
 def check_filetype(filename, filetype):
-    """check if filetype of <filename> is indeed <filetype>
-       write errors if not"""
+    """check if filetype of <filename> is indeed <filetype>"""
     # get file type
     header = magic.from_file(filename).split(",")[0]
 
     # only continue if file type is an archive
     if filetype not in header:
-        output.printstatus("err_skip", displayname)
-        output.printstatus("err_not_valid", filetype, displayname)
         return False
 
     if "Java" in header: # yes, we're testing for this
