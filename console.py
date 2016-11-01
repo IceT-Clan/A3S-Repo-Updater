@@ -31,6 +31,10 @@ class Output:
                              "(" + args[1] + ") correctly? " +
                              "(use --steam-only to skip other sources)" +
                              "\n")
+        elif state == "err_skip":
+            sys.stdout.write("\r" + "[ " + ansi_escape.F_L_RED + "SKIP" +
+                             ansi_escape.RESET + " ] " +
+                             "Error updating " + displayname + "\n")
         else:
             raise TypeError(state + " is not a valid state")
 
