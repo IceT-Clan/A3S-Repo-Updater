@@ -1,3 +1,6 @@
 *.swp
 *.pyc
 *.sublime-workspace
+*.zip
+*.rar
+*.bin
