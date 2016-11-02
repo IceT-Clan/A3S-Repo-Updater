@@ -163,15 +163,15 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         displayname = mod[1]
         url = mod[2]
         version_regex = mod[3]
-        if len(mod) = 4:
+        if len(mod) == 4:
             cur_version = "0"
-        elif len(mod) = 5:
+        elif len(mod) == 5:
              cur_version = mod[4]
         new_version = str()
-        savedfile.join([displayname, ".archive"])
+        savedfilei = ''.join([displayname, ".archive"])
 
         output.printstatus("updating", displayname)
-        download(output, url, "/tmp/" + displayname + ".tmp", displayname,
+        download(output, url, ''.join(["/tmp/", displayname, ".tmp"]), displayname,
                  True)
 
         # get version from downloaded file
