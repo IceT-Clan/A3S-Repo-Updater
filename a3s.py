@@ -163,9 +163,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         displayname = mod[1]
         url = mod[2]
         version_regex = mod[3]
-        if not mod[4]:
+        if len(mod) = 4:
             cur_version = "0"
-        else:
+        elif len(mod) = 5:
              cur_version = mod[4]
         new_version = str()
         savedfile.join([displayname, ".archive"])
