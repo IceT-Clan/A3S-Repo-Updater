@@ -106,7 +106,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
-            output.printstatus("err_not_valid", displayname, "archive")
+            output.printstatus("err_not_valid", savedfile, "archive")
             return
 
         output.debug("inflating " + savedfile)
@@ -163,7 +163,10 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         displayname = mod[1]
         url = mod[2]
         version_regex = mod[3]
-        cur_version = mod[4]
+        if not mod[4]:
+            cur_version = "0"
+        else:
+             cur_version = mod[4]
         new_version = str()
         savedfile.join([displayname, ".archive"])
 
@@ -201,7 +204,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
-            output.printstatus("err_not_valid", displayname, "archive")
+            output.printstatus("err_not_valid", savedfile, "archive")
             return
         output.debug("inflating " + savedfile)
 
