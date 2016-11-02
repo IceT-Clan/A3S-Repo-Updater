@@ -186,7 +186,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # test if we actually want to update
         if not kwargs["skip_version"]:
             versions = list()  # clear your stuff before using it
-            console.Output(True).debug("should be cleared: " + versions)
             versions.append(new_version)
             versions.append(cur_version)
             versions.sort(reverse=True)
@@ -198,7 +197,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # download newest version
         download(output, os.path.join(url, new_version), savedfile,
                  displayname)
-        print(ansi_escape.ERASE_LINE, end="")  # needed: fixes visual bug
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
