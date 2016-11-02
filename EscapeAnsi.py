@@ -89,22 +89,22 @@ class EscapeAnsi:
 
     def cursor_up(lines):
         """print cursor up"""
-        return ''.join(['\033[', lines, 'A'])
+        return ''.join(['\033[', str(lines), 'A'])
 
     def cursor_down(lines):
         """print cursor down"""
-        return ''.join([['\033[', lines, 'B']])
+        return ''.join([['\033[', str(lines), 'B']])
 
     def cursor_left(columns):
         """print cursor left"""
-        return ''.join([['\033[', columns, 'C']])
+        return ''.join([['\033[', str(columns), 'C']])
 
     def cursor_right(columns):
         """print cursor right"""
-        return ''.join([['\033[', columns, 'D']])
+        return ''.join([['\033[', str(columns), 'D']])
 
     def set_cursor(line, column, alternative=False):
         """print set cursor"""
         if not alternative:
-            return ''.join([['\033[', line, ';', column, 'H']])
-        return ''.join([['\033[', line, ';', column, 'f']])
+            return ''.join([['\033[', str(line), ';', str(column), 'H']])
+        return ''.join([['\033[', str(line), ';', str(column), 'f']])
