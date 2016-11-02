@@ -99,9 +99,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         zipname = file_format.replace("$version", new_version)
         savedfile = displayname + ".zip"
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-        download(output, "https://github.com/" + github_loc +
-                 "/releases/download/" + new_tag + "/" + zipname,
-                 savedfile, displayname)
+        url = ''.join(["https://github.com/", github_loc, "/releases/download/",
+                      new_tag, "/", zipname])
+        download(output, url, savedfile)
 
         if not check_filetype(savedfile, "archive"):
             # output.printstatus("err_skip", displayname)
