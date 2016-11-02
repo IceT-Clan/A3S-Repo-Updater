@@ -107,14 +107,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
-            sys.stdout.write("\nURL: " + url)
+            sys.stdout.write("URL: " + url + "\n")
             url = input("URL:")
             if not url:
                 return
             else:
                 sys.stdout.write(ansi_escape.cursor_up(2) + ansi_escape.ERASE_LINE)
                 output.printstatus("updating", displayname)
-                download(output, os.path.join(url, new_version), savedfile,
+                download(output, url, savedfile,
                          displayname)
                 continue
         output.debug("inflating " + savedfile)
@@ -211,14 +211,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
-            sys.stdout.write("\nURL: " + url)
+            sys.stdout.write("URL: " + url + "\n")
             url = input("URL:")
             if not url:
                 return
             else:
                 sys.stdout.write(ansi_escape.cursor_up(2) + ansi_escape.ERASE_LINE)
                 output.printstatus("updating", displayname)
-                download(output, os.path.join(url, new_version), savedfile,
+                download(output, url, savedfile,
                          displayname)
                 continue
         output.debug("inflating " + savedfile)
