@@ -365,16 +365,17 @@ def main():
         is_failed = True
         while is_failed:
             is_failed = False
-            with open("steambag.tmp", "wb") as steambag:
+            with open("steambag.tmp", "wt") as steambag:  # wt (=write text) instead of wb (=write bytes)
                 output.printstatus("do_workshop")
                 login = input("Login: ")
                 passwd = getpass.getpass()
-                steamguard = input("Steam Guard Code: ")
+                while not steamguard:
+                    steamguard = input("Steam Guard Code: ")
 
                 steambag.write("login " + login + " " + passwd + " " +
                                steamguard + "\n")
 
-                # remove ugly login print
+                # remove ugly login prompt
                 cursor_up_one = '\x1b[1A'
                 erase_line = '\x1b[2K'
                 for i in range(3):
