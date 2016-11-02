@@ -47,6 +47,7 @@ def pls_copy(output, src, dst):
     else:
         output.printstatus("err_not_exist", src)
 
+
 def get_sources(args):
     """get all source flags from args and return as dict"""
     enabled_sources = {"github": True,
@@ -116,6 +117,7 @@ def rm_all_symlinks(directory):
                 # If it's not a symlink we're not interested.
                 continue
 
+
 def check_filetype(filename, filetype):
     """check if filetype of <filename> is indeed <filetype>"""
     # get file type
@@ -125,7 +127,7 @@ def check_filetype(filename, filetype):
     if filetype not in header:
         return False
 
-    if "Java" in header: # yes, we're testing for this
+    if "Java" in header:  # yes, we're testing for this
         secret.android()
         return False
     return True

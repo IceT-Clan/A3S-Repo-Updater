@@ -99,20 +99,24 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         zipname = file_format.replace("$version", new_version)
         savedfile = displayname + ".zip"
         output.debug("zipname: " + zipname + "; savedfile: " + savedfile)
-        url = ''.join(["https://github.com/", github_loc, "/releases/download/",
-                      new_tag, "/", zipname])
+        url = ''.join(["https://github.com/", github_loc,
+                       "/releases/download/", new_tag, "/", zipname])
         download(output, url, savedfile)
 
         while not check_filetype(savedfile, "archive"):
             # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
-            sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
+            sys.stdout.write("You can change the URL now. " +
+                             "Nothing means skip this mod.\n")
             sys.stdout.write("URL: " + url + "\n")
             url = input("URL: ")
             if not url:
                 return
             else:
-                sys.stdout.write(ansi_escape.cursor_up(2) + ansi_escape.ERASE_LINE)
+                sys.stdout.write(ansi_escape.cursor_up(1) +
+                                 ansi_escape.ERASE_LINE +
+                                 ansi_escape.cursor_up(1) +
+                                 ansi_escape.ERASE_LINE)
                 output.printstatus("updating", displayname)
                 download(output, url, savedfile,
                          displayname)
@@ -210,13 +214,17 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         while not check_filetype(savedfile, "archive"):
             # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
-            sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
+            sys.stdout.write("You can change the URL now. " +
+                             "Nothing means skip this mod.\n")
             sys.stdout.write("URL: " + url + "\n")
             url = input("URL: ")
             if not url:
                 return
             else:
-                sys.stdout.write(ansi_escape.cursor_up(2) + ansi_escape.ERASE_LINE)
+                sys.stdout.write(ansi_escape.cursor_up(1) +
+                                 ansi_escape.ERASE_LINE +
+                                 ansi_escape.cursor_up(1) +
+                                 ansi_escape.ERASE_LINE)
                 output.printstatus("updating", displayname)
                 download(output, url, savedfile,
                          displayname)
@@ -248,6 +256,10 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         url = mod[2]
         path = mod[2].split("//")[1]
 
+        sys.stdout.write("\rwe can't get the version for this type of mod." +
+                         "Do you really want to download the whole mod?")
+        if not input("Skip mod? (Y/n)").to_upper() == "N":
+            return
         output.printstatus("updating", displayname)
 
         if path.endswith("/"):
@@ -268,7 +280,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
-    version = "0.5.1"
+    version = "0.5.4"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
@@ -365,10 +377,11 @@ def main():
         is_failed = True
         while is_failed:
             is_failed = False
-            with open("steambag.tmp", "wt") as steambag:  # wt (=write text) instead of wb (=write bytes)
+            with open("steambag.tmp", "wt") as steambag:
                 output.printstatus("do_workshop")
                 login = input("Login: ")
                 passwd = getpass.getpass()
+                steamguard = str()
                 while not steamguard:
                     steamguard = input("Steam Guard Code: ")
 
