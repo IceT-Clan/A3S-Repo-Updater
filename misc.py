@@ -1,15 +1,12 @@
 """misc functions"""
 import os
-import glob
 import shutil
-import subprocess
 import requests
 import magic
-from EscapeAnsi import EscapeAnsi as ansi_escape
+import secret
 
 
-
-def download(output, url, file_name, displayname, new_line=False):
+def download(output, url, file_name, new_line=False):
     """download <URL> to <file_name>"""
     output.debug("download " + url + " as " + file_name, add_newline=new_line)
     with open(file_name, "wb") as download_file:
@@ -131,5 +128,4 @@ def check_filetype(filename, filetype):
     if "Java" in header: # yes, we're testing for this
         secret.android()
         return False
-    output.debug("found file type '" + header + "' for file " + savedfile)
     return True

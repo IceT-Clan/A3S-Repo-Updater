@@ -20,7 +20,6 @@ from pyunpack import Archive
 # Import Locals
 from EscapeAnsi import EscapeAnsi as ansi_escape
 import console
-import secret
 from misc import (download, link_to, pls_copy, read_config, get_dirs,
                   rm_all_symlinks, get_sources, check_filetype)
 
@@ -166,13 +165,12 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         if len(mod) == 4:
             cur_version = "0"
         elif len(mod) == 5:
-             cur_version = mod[4]
+            cur_version = mod[4]
         new_version = str()
-        savedfilei = ''.join([displayname, ".archive"])
+        savedfile = ''.join([displayname, ".archive"])
 
         output.printstatus("updating", displayname)
-        download(output, url, ''.join(["/tmp/", displayname, ".tmp"]), displayname,
-                 True)
+        download(output, url, ''.join(["/tmp/", displayname, ".tmp"]), True)
 
         # get version from downloaded file
         with open("/tmp/" + displayname + ".tmp", "r") as page:
@@ -187,7 +185,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # test if we actually want to update
         if not kwargs["skip_version"]:
-            versions = list() # clear your stuff before using it
+            versions = list()  # clear your stuff before using it
             console.Output(True).debug("should be cleared: " + versions)
             versions.append(new_version)
             versions.append(cur_version)
@@ -200,7 +198,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         # download newest version
         download(output, os.path.join(url, new_version), savedfile,
                  displayname)
-        print(ansi_escape.ERASE_LINE, end="") # needed: fixes visual bug
+        print(ansi_escape.ERASE_LINE, end="")  # needed: fixes visual bug
 
         if not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
@@ -253,13 +251,14 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
+    version = "0.5.1"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
     group = parser.add_mutually_exclusive_group(required=True)
 
     parser.add_argument("-v", "--version",
-                        action="version", version='%(prog)s 0.2.0')
+                        action="version", version='%(prog)s ' + version)
     parser.add_argument("-d", "--debug",
                         help="enable debug",
                         action="store_true")
@@ -314,11 +313,11 @@ def main():
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)
-    
+
     # lets go somewhere else so we can cleanup easier
     os.makedirs("_a3s", exist_ok=True)
     os.chdir("_a3s")
-    
+
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
@@ -343,7 +342,7 @@ def main():
                            "/home/arma3/steamcmd/steamapps/" +
                            "workshop/appworkshop_107410.acf")
         os.remove("/home/arma3/steamcmd/steamapps/" +
-                  "workshop/appworkshop_107410.acf")  #! make path relative
+                  "workshop/appworkshop_107410.acf")  # make path relative #!#
 
     if args.update and enabled_sources["workshop"]:
         is_failed = True
