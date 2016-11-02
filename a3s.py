@@ -108,7 +108,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
             sys.stdout.write("URL: " + url + "\n")
-            url = input("URL:")
+            url = input("URL: ")
             if not url:
                 return
             else:
@@ -212,7 +212,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. Nothing means skip this mod.\n")
             sys.stdout.write("URL: " + url + "\n")
-            url = input("URL:")
+            url = input("URL: ")
             if not url:
                 return
             else:
