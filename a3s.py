@@ -104,9 +104,16 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  savedfile, displayname)
 
         if not check_filetype(savedfile, "archive"):
-            output.printstatus("err_skip", displayname)
+            # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
-            return
+            sys.stdout.write("You can change the URL now. Nothing means skip this mod.")
+            sys.stdout.write("URL: " + url)
+            url = input("URL:")
+            if not url:
+                return
+            else:
+                download(output, os.path.join(url, new_version), savedfile,
+                         displayname)
 
         output.debug("inflating " + savedfile)
 
@@ -170,10 +177,10 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         savedfile = ''.join([displayname, ".archive"])
 
         output.printstatus("updating", displayname)
-        download(output, url, ''.join(["/tmp/", displayname, ".tmp"]), True)
+        download(output, url, ''.join([displayname, ".tmp"]), True)
 
         # get version from downloaded file
-        with open("/tmp/" + displayname + ".tmp", "r") as page:
+        with open(displayname + ".tmp", "r") as page:
             versions = list()
             for line in page:
                 line = re.findall(version_regex, line)
@@ -199,7 +206,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                  displayname)
 
         while not check_filetype(savedfile, "archive"):
-            output.printstatus("err_skip", displayname)
+            # output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. Nothing means skip this mod.")
             sys.stdout.write("URL: " + url)
@@ -215,7 +222,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         Archive(savedfile).extractall(dirs["mods"])
 
         # Cleanup
-        os.remove("/tmp/" + displayname + ".tmp")
+        os.remove(displayname + ".tmp")
         os.remove(savedfile)
 
         # Write new version to config
@@ -353,7 +360,7 @@ def main():
         is_failed = True
         while is_failed:
             is_failed = False
-            with open("/tmp/steambag.tmp", "wb") as steambag:
+            with open("steambag.tmp", "wb") as steambag:
                 output.printstatus("do_workshop")
                 login = input("Login: ")
                 passwd = getpass.getpass()
@@ -379,7 +386,7 @@ def main():
                 steambag.write("quit")
 
             output.debug("run \'" + dirs["steamcmd"] +
-                         " +runscript /tmp/steambag.tmp\'")
+                         " +runscript steambag.tmp\'")
             if args.security == 1:
                 sys.stdout.write("\rHide Text for security reasons." +
                                  "THX VOLVO! (disable with --security 0)" +
@@ -391,14 +398,14 @@ def main():
                 sys.stdout.write("\rVoiding Steam Output.\n" +
                                  "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + dirs["steamcmd"] +
-                          " +runscript /tmp/steambag.tmp" + ">> /dev/null")
+                          " +runscript steambag.tmp" + ">> /dev/null")
             else:
                 os.system("bash " + dirs["steamcmd"] +
-                          " +runscript /tmp/steambag.tmp")
+                          " +runscript steambag.tmp")
 
             sys.stdout.write(ansi_escape.HIDDEN_OFF)
             output.debug("remove steambag")
-            os.remove("/tmp/steambag.tmp")
+            os.remove("steambag.tmp")
 
             for i, _ in enumerate(workshop_ids):
                 if not os.path.isdir(dirs["steamdownload"] + "/" +
