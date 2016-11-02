@@ -198,10 +198,17 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         download(output, os.path.join(url, new_version), savedfile,
                  displayname)
 
-        if not check_filetype(savedfile, "archive"):
+        while not check_filetype(savedfile, "archive"):
             output.printstatus("err_skip", displayname)
             output.printstatus("err_not_valid", savedfile, "archive")
-            return
+            sys.stdout.write("You can change the URL now. Nothing means skip this mod.")
+            sys.stdout.write("URL: " + url)
+            url = input("URL:")
+            if not url:
+                return
+            else:
+                download(output, os.path.join(url, new_version), savedfile,
+                         displayname)
         output.debug("inflating " + savedfile)
 
         # extract <savedfile> to <dirs["mods"]>
