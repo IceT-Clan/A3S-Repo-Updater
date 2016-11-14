@@ -164,7 +164,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                                           github_loc + ".git",
                                           displayname)
             for mod_file in gglob(displayname + r"/@*"):
-                shutil.move(mod_file, dirs["mods"] + "/" + displayname)
+                output.debug("copy " + mod_file + " --> " + dirs["mods"] +
+                             "/" + displayname)
+                shutil.copy(mod_file, dirs["mods"] + "/" + displayname)
         output.printstatus("success_update", displayname)
 
         # link moddir/@mod to repo/@mod
