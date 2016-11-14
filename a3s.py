@@ -416,7 +416,7 @@ def main():
                                  "Please use --security 2 instead\n")
             elif args.security == 2:
                 output.debug("redirect steam output to /dev/null")
-                sys.stdout.write("\rVoiding Steam Output.\n" +
+                sys.stdout.write("\rVoiding Steam Output. Please do not use this as this is not working as inteded...\n" +
                                  "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + dirs["steamcmd"] +
                           " +runscript steambag.tmp" + ">> /dev/null")
