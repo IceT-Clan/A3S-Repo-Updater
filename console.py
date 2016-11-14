@@ -102,4 +102,4 @@ class Output:
             newline = ""
         if self.is_debug:
             sys.stdout.write(newline + "[" + ansi_escape.BOLD + "DEBUG" +
-                             ansi_escape.RESET + "] " + str(msg) + "\n")
+                             ansi_escape.RESET + " ] " + str(msg) + "\n")
