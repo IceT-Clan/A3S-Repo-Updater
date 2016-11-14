@@ -256,9 +256,9 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         url = mod[2]
         path = mod[2].split("//")[1]
 
-        sys.stdout.write("\rwe can't get the version for this type of mod." +
-                         "Do you really want to download the whole mod?")
-        if not input("Skip mod? (Y/n)").to_upper() == "N":
+        sys.stdout.write("\rFor this type of mod is no version verification available. " +
+                         "Do you still want to download " + displayname + "?\n")
+        if not input("Skip mod? (Y/n)").upper() == "N":
             return
         output.printstatus("updating", displayname)
 
@@ -280,7 +280,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
-    version = "0.5.4"
+    version = "0.5.5"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
