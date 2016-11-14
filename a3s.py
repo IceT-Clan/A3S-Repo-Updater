@@ -478,7 +478,7 @@ def main():
 
     # and finally cleanup after ourself
     os.chdir("..")
-    os.rmdir("_a3s")
+    shutil.rmtree("_a3s")
 
 
 if __name__ == "__main__":
