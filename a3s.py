@@ -419,10 +419,10 @@ def main():
                 sys.stdout.write("\rVoiding Steam Output. Please do not use this as this is not working as inteded...\n" +
                                  "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + dirs["steamcmd"] +
-                          " +runscript steambag.tmp" + ">> /dev/null")
+                          " +runscript " + os.path.abspath("steambag.tmp") + " >> /dev/null")
             else:
                 os.system("bash " + dirs["steamcmd"] +
-                          " +runscript steambag.tmp")
+                          " +runscript " + os.path.abspath("steambag.tmp"))
 
             sys.stdout.write(ansi_escape.HIDDEN_OFF)
             output.debug("remove steambag")
