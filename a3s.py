@@ -280,7 +280,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
-    version = "0.5.5"
+    version = "0.5.6"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
@@ -331,6 +331,8 @@ def main():
 
     if args.security > 2:
         args.security = 2
+    if args.debug:
+        args.security = 0
 
     output.debug(args)
 
@@ -408,7 +410,7 @@ def main():
                          " +runscript steambag.tmp\'")
             if args.security == 1:
                 sys.stdout.write("\rHide Text for security reasons." +
-                                 "THX VOLVO! (disable with --security 0)" +
+                                 "THX VOLVO! (no security with --security 0)" +
                                  ansi_escape.HIDDEN + "\n")
                 sys.stdout.write("\rThis does not seem to be working. " +
                                  "Please use --security 2 instead\n")
