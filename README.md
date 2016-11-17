@@ -21,48 +21,48 @@ A Python Python-powered Mod Updater for Arma3Sync Repositorys with steam worksho
 First of all you need Python3 (not Python2).
 ### Python
 #### Arch Linux
-`pacman -S python3 pip3`
+`$ pacman -S python3 pip3`
 #### Ubuntu/Debian
-`apt install python3 pip3`
+`$ apt install python3 pip3`
 #### RedHat/CentOS
-`yum install python3 pip3`
+`$ yum install python3 pip3`
 Then install the required packages from PyPi
 ### PyPi
-`sudo pip install -r requirements.txt`
+`$ sudo pip install -r requirements.txt`
 
 And then SteamCMD. For more help visit the [SteamCMD wiki](https://developer.valvesoftware.com/wiki/SteamCMD).
 ### SteamCMD
 #### Arch Linux
-`pacman -S steamcmd`
+`$ pacman -S steamcmd`
 #### Ubuntu/Debian
-`apt install steamcmd`
+`$ apt install steamcmd`
 #### RedHat/CentOS
-`yum install steamcmd`
+`$ yum install steamcmd`
 #### Manual
 You need to install `lib32gcc1` too
 
-`curl -sqL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxvf -`
+`$ curl -sqL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar zxvf -`
 
 ### Arma3Sync
 Now _Arma3Sync_ to make the repositorys but you can also use something else like [Swifty](https://getswifty.net/) (ony available on Windows).
 
 Install Java
 #### Arch Linux
-`pacman -S java`
+`$ pacman -S java`
 #### Ubuntu/Debian
-`apt install java`
+`$ apt install java`
 #### RedHat/CentOS
-`yum install java`
+`$ yum install java`
 
 Get _Arma3Sync_ from [armaholic.com](http://www.armaholic.com/page.php?id=22199) or from [sonsofexiled.fr](http://www.sonsofexiled.fr/wiki/index.php/ArmA3Sync_Wiki_English). You can also use SVN to get the source `svn://www.sonsofexiled.fr/repository/ArmA3Sync/releases`.
 
 
 ## Usage
-`a3s-repo-updater.py --add`
+`$ a3s-repo-updater.py --add`
 
-`a3s-repo-updater.py --remove`
+`$ a3s-repo-updater.py --remove`
 
-`a3s-repo-updater.py --update`
+`$ a3s-repo-updater.py --update`
 
 ## License
 A3S Repository Updater is licensed under the [GNU license](LICENSE).
