@@ -1,0 +1,88 @@
+\documentclass[a4paper]{article}
+\usepackage{fontspec}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage[dvipsnames]{xcolor}
+%\usepackage[ampersand]{easylist}
+\setmainfont[]{Noto Sans}
+\title{A3S Repo Updater Documentary}
+\author{Nikolai Zimmermann}
+
+\begin{document}
+\lstset{%
+	%frame=single
+	backgroundcolor=\color[HTML]{dddddd}
+}
+\begin{titlepage}
+	\begin{center}
+		
+	\end{center}
+\end{titlepage}
+	
+	\tableofcontents
+	\newpage
+	
+	\part{Introduction}
+		\section{What is this?}
+			This is the A3S Repo Updater. Or Arma3Sync-Repository Updater.\newline
+			I made this because creating Repositories for Arma3Sync is enough of a hassle. So I made updating the Mods more or less automatic, but definitely easier.	\newline
+			You now can easily add mods to a config file or use the wizard wich also enables you to remove active mods and enable mods.
+		\section{How does this work?}
+			The mods get downloaded from the Steam Workshop, for wich you need a account with a valid Arma3 License, or from Github via cloning from master or using the latest download option.
+			You can also define a download location yourself.
+	\newpage
+	
+	\part{A3S-Repository Updater}
+		\section{Install A3S-Repo Updater}
+			$ $
+			\subsection{Requirements}
+				\begin{itemize}[noitemsep]
+				\item python3
+				\item pip
+				\item git
+				\item Arma3Sync
+				\item SteamCMD
+				\end{itemize}
+
+			\subsection{Installation}
+				\lstset{language=sh}
+				\begin{lstlisting}
+git clone https://github.com/IceT-Clan/A3S-Repo-Updater
+				\end{lstlisting}
+	
+		\section{How to use A3S-Repo Updater}
+			When running A3S-Repo Updater for the first time (or you don't have a repo.cfg) you will be prompted with a setup installing SteamCMD and Arma3Sync.\newline After that you can use A3S-RU like normal.
+			\subsection{Commands}
+				TODO
+			\subsection{Config}
+				TODO
+	\newpage
+	
+	\part{SteamCMD}
+		TODO
+		\section{Install SteamCMD}
+			TODO
+			\subsection{Requirements}
+				TODO
+			\subsection{Installation}
+				TODO
+		\section{Guide to SteamCMD}
+	\newpage
+	
+	\part{Arma3Sync}
+		mini rant
+		\section{Install Arma3Sync}
+			TODO
+			\subsection{Requirements}
+				TODO
+			\subsection{Installation}
+				TODO
+		\section{Usage}
+			TODO
+			\subsection{Adding a Repository}
+				TODO
+			\subsection{Building a Repository}
+				TODO
+			\subsection{Removing a Repository}
+				TODO
+\end{document}
