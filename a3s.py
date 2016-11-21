@@ -282,7 +282,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def main():
     """main"""
-    version = "0.5.6"
+    version = "1.0.0"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
