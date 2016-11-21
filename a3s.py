@@ -264,9 +264,10 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         url = mod[2]
         path = mod[2].split("//")[1]
 
-        sys.stdout.write("\rFor this type of mod is no version verification available. " +
-                         "Do you still want to download " + displayname + "?\n")
-        if not input("Skip mod? (Y/n) ").upper() == "N":
+        sys.stdout.write("\rFor this type of mod " +
+                         "no version verification available. ")
+        if not input("Do you still want to download " +
+                     displayname + "? (Y/n)\n").upper() == "N":
             return
         output.printstatus("updating", displayname)
 
