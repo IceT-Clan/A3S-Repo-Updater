@@ -108,8 +108,12 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             output.printstatus("err_not_valid", savedfile, "archive")
             sys.stdout.write("You can change the URL now. " +
                              "Nothing means skip this mod.\n")
-            sys.stdout.write("URL: " + url + "\n")
-            url = input("URL: ")
+            sys.stdout.write("our URL: " + url + "\n")
+            sys.stdout.write("look here for new URL: " +
+                             ''.join(["https://github.com/",
+                                      github_loc,
+                                      "releases/latest"]))
+            url = input("new URL: ")
             if not url:
                 return
             else:
