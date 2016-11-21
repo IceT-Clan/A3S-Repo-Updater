@@ -267,7 +267,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         sys.stdout.write("\rFor this type of mod " +
                          "no version verification available. ")
         if not input("Do you still want to download " +
-                     displayname + "? (Y/n)\n").upper() == "N":
+                     displayname + "? (Y/n)\n").upper() == "Y":
             return
         output.printstatus("updating", displayname)
 
@@ -285,6 +285,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         # link moddir/@mod to repo/@mod
         link_to(output, dirs["mods"], dirs["repo"], displayname)
+        output.printstatus("success_linking", displayname)
 
 
 def main():
