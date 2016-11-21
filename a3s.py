@@ -120,6 +120,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 sys.stdout.write(ansi_escape.cursor_up(1) +
                                  ansi_escape.ERASE_LINE +
                                  ansi_escape.cursor_up(1) +
+                                 ansi_escape.ERASE_LINE +
+                                 ansi_escape.cursor_up(1) +
                                  ansi_escape.ERASE_LINE)
                 output.printstatus("updating", displayname)
                 download(output, url, savedfile,
@@ -264,7 +266,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
         sys.stdout.write("\rFor this type of mod is no version verification available. " +
                          "Do you still want to download " + displayname + "?\n")
-        if not input("Skip mod? (Y/n)").upper() == "N":
+        if not input("Skip mod? (Y/n) ").upper() == "N":
             return
         output.printstatus("updating", displayname)
 
