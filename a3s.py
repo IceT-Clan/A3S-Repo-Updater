@@ -281,7 +281,13 @@ def link_mods(output, dirs, mod):
     """link mod to repo"""
     displayname = mod[1]
 
-    if mod[0] in ["manual", "ace_optionals", "steam"]:
+    if mod[0] in ["manual",
+                  "manual_location",
+                  "ace_optionals",
+                  "steam",
+                  "steamcmd",
+                  "modlocation",
+                  "repolocation"]:
         return
 
     link_to(output, dirs["mods"], dirs["repo"], displayname)
