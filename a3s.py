@@ -24,7 +24,7 @@ from misc import (download, link_to, pls_copy, read_config, get_dirs,
                   rm_all_symlinks, get_sources, check_filetype)
 
 
-def updater_update(output):
+def update_updater(output):
     """update the updater"""
     branch = "master"
     u_git = git.Git("./")
@@ -32,7 +32,6 @@ def updater_update(output):
     output.debug("current branch: " + u_git.branch())
     if not u_git.branch_name == branch:
         u_git.checkout(branch)
-
     try:
         u_git.pull()
     except Exception as exp:
@@ -351,6 +350,9 @@ def main():
         args.security = 0
 
     output.debug(args)
+
+    # check for update
+    update_updater(output)
 
     # get enabled sources
     enabled_sources = get_sources(args)
