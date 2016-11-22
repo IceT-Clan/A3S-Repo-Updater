@@ -26,7 +26,7 @@ from misc import (download, link_to, pls_copy, read_config, get_dirs,
 
 def updater_update(output):
     """update the updater"""
-    branch = "development"
+    branch = "master"
     u_git = git.Git("./")
     u_git.init()
     output.debug("current branch: " + u_git.branch())
@@ -45,6 +45,7 @@ def updater_update(output):
 def update(output, dirs, enabled_sources, mod, **kwargs):
     """update mods with given information"""
     config_location = "../repo.cfg"
+
     # Manual downloaded Mods
     if mod[0] == "manual":
         displayname = mod[1]
@@ -143,9 +144,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
 
-        # link moddir/@mod to repo/@mod
-        link_to(output, dirs["mods"], dirs["repo"], displayname)
-
         output.printstatus("success_update", displayname)
 
     # Github
@@ -173,10 +171,8 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 output.debug("copy " + mod_file + " --> " + dirs["mods"] +
                              "/" + displayname)
                 shutil.copy(mod_file, dirs["mods"] + "/" + displayname)
-        output.printstatus("success_update", displayname)
 
-        # link moddir/@mod to repo/@mod
-        link_to(output, dirs["mods"], dirs["repo"], displayname)
+        output.printstatus("success_update", displayname)
 
     # Curl Biggest Archive
     elif mod[0] == "curl_biggest_archive" and enabled_sources["curl"]:
@@ -254,9 +250,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
                 line = line.replace(old_line, new_line)
             sys.stdout.write(line)
 
-        # link moddir/@mod to repo/@mod
-        link_to(output, dirs["mods"], dirs["repo"], displayname)
-
         output.printstatus("success_update", displayname)
 
     elif mod[0] == "curl_folder" and enabled_sources["curl"]:
@@ -283,14 +276,21 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
         shutil.rmtree(path)
         output.printstatus("success_update", displayname)
 
-        # link moddir/@mod to repo/@mod
-        link_to(output, dirs["mods"], dirs["repo"], displayname)
-        output.printstatus("success_linking", displayname)
+
+def link_mods(output, dirs, mod):
+    """link mod to repo"""
+    displayname = mod[1]
+
+    if mod[0] in ["manual", "ace_optionals", "steam"]:
+        return
+
+    link_to(output, dirs["mods"], dirs["repo"], displayname)
+    output.printstatus("success_linking", displayname)
 
 
 def main():
     """main"""
-    version = "1.0.0"
+    version = "1.0.1"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
@@ -362,20 +362,26 @@ def main():
     workshop_ids = list()
     workshop_names = list()
     ace_optional_files = list()
-    for mod in modlist:
-        if args.update:
-            rm_all_symlinks(dirs["repo"])
+
+    if args.update:
+        rm_all_symlinks(dirs["repo"])
+        for mod in modlist:
             update(output, dirs, enabled_sources, mod,
                    skip_version=args.skip_version)
+
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
                 output.printstatus("ace_opt_add", mod[1])
+
             # Steam Workshop
             if mod[0] == "steam" and enabled_sources["workshop"]:
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
                 output.printstatus("steambag_add", mod[1])
+
+            # link mods to repo
+            link_mods(output, dirs, mod)
 
     # Steam Workshop
     if args.workshop_reset:
@@ -426,10 +432,12 @@ def main():
                                  "Please use --security 2 instead\n")
             elif args.security == 2:
                 output.debug("redirect steam output to /dev/null")
-                sys.stdout.write("\rVoiding Steam Output. Please do not use this as this is not working as inteded...\n" +
+                sys.stdout.write("\rVoiding Steam Output. Please do not use" +
+                                 "this as this is not working as inteded...\n" +
                                  "\tWARNING! This is of no means safe!\n")
                 os.system("bash " + dirs["steamcmd"] +
-                          " +runscript " + os.path.abspath("steambag.tmp") + " >> /dev/null")
+                          " +runscript " + os.path.abspath("steambag.tmp") +
+                          " >> /dev/null")
             else:
                 os.system("bash " + dirs["steamcmd"] +
                           " +runscript " + os.path.abspath("steambag.tmp"))
