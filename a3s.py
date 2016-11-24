@@ -298,7 +298,7 @@ def link_mods(output, dirs, mod):
 
 def main():
     """main"""
-    version = "1.0.1"
+    version = "1.0.3"
 
     # Command line argument setup
     parser = argparse.ArgumentParser(description="ArmA 3 Repository Updater")
