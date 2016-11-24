@@ -20,8 +20,8 @@ from pyunpack import Archive
 # Import Locals
 from EscapeAnsi import EscapeAnsi as ansi_escape
 import console
-from misc import (download, link_to, pls_copy, read_config, get_dirs,
-                  rm_all_symlinks, get_sources, check_filetype)
+from misc import (download, link_to, pls_copy, read_config, print_config,
+                  get_dirs, rm_all_symlinks, get_sources, check_filetype)
 
 
 def update_updater(output):
@@ -360,6 +360,9 @@ def main():
 
     # Read existing config
     modlist = read_config("repo.cfg")
+
+    output.debug(repr(modlist))
+    output.debug(print_config("repo.cfg")
 
     # Locate saving directory for installed mods
     dirs = get_dirs(output, modlist)

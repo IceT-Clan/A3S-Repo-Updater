@@ -40,6 +40,24 @@ def read_config(repo):
     return modlist
 
 
+def print_config(repo):
+    "read and return nicely formatted repo config"""
+    modlist = list()
+    with open(repo, "r") as conf:
+        for line in conf:
+            if not line:
+                continue
+            if line.startswith("#"):
+                continue
+            if not line.strip():
+                continue
+            modlist.append(line.strip("\n").split(","))
+    output = str()
+    for mod in modlist:
+       output = "".join([output, ", ".join(mod), "\n"])
+    return output
+
+
 def pls_copy(output, src, dst):
     """just copy src to dst"""
     if os.path.isdir(src):
