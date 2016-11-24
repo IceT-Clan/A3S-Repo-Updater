@@ -30,9 +30,11 @@ def read_config(repo):
     modlist = list()
     with open(repo, "r") as conf:
         for line in conf:
+            if not line:
+                continue
             if line.startswith("#"):
                 continue
-            if line.strip():
+            if not line.strip():
                 continue
             modlist.append(line.strip("\n").split(","))
     return modlist

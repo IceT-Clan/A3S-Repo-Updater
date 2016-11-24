@@ -278,6 +278,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def link_mods(output, dirs, mod):
     """link mod to repo"""
+    output.debug(repr(mod))
     if mod[0] in ["manual",
                   "manual_location",
                   "ace_optionals",
@@ -288,6 +289,7 @@ def link_mods(output, dirs, mod):
                   ]:
         return
     displayname = mod[1]
+
     link_to(output, dirs["mods"], dirs["repo"], displayname)
     output.printstatus("success_linking", displayname)
 
@@ -376,6 +378,9 @@ def main():
             update(output, dirs, enabled_sources, mod,
                    skip_version=args.skip_version)
 
+            # link mods to repo
+            link_mods(output, dirs, mod)
+
             # ace_optionals
             if mod[0] == "ace_optionals" and enabled_sources["ace_optionals"]:
                 ace_optional_files.append(mod[1])
@@ -386,9 +391,8 @@ def main():
                 workshop_names.append(mod[1])
                 workshop_ids.append(mod[2])
                 output.printstatus("steambag_add", mod[1])
+        output.debug("finished modlist")
 
-            # link mods to repo
-            link_mods(output, dirs, mod)
 
     # Steam Workshop
     if args.workshop_reset:
