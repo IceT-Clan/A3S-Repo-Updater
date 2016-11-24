@@ -483,7 +483,7 @@ def main():
             output.printstatus("success_update", "Steam Workshop")
 
     # ace_optionals
-    if args.update and enabled_sources["ace_optionals"]:
+    if args.update and enabled_sources["ace_optionals"] and ace_optional_files:
         if os.path.isdir(dirs["mods"] + "/@ace_optionals"):
             output.debug("existing @ace_optionals found. removing old files")
             shutil.rmtree(dirs["mods"] + "/@ace_optionals")
