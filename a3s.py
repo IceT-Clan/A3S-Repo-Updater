@@ -11,7 +11,7 @@ import getpass
 import re
 import subprocess
 import distutils.dir_util
-# import Other
+# import other
 import argparse
 import fileinput
 # from ftplib import FTP
@@ -352,7 +352,7 @@ def main():
     output.debug(args)
 
     # check for update
-    update_updater(output)
+    #update_updater(output)
 
     # get enabled sources
     enabled_sources = get_sources(args)
