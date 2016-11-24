@@ -286,7 +286,10 @@ def link_mods(output, dirs, mod):
                   "steam",
                   "steamcmd",
                   "modlocation",
-                  "repolocation"]:
+                  "repolocation",
+                  # workaround for IndexOutOfRange when repo.cfg has a newline
+                  ""
+                  ]:
         return
 
     link_to(output, dirs["mods"], dirs["repo"], displayname)
