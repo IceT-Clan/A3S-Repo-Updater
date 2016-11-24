@@ -402,7 +402,7 @@ def main():
         os.remove("/home/arma3/steamcmd/steamapps/" +
                   "workshop/appworkshop_107410.acf")  # make path relative #!#
 
-    if args.update and enabled_sources["workshop"]:
+    if args.update and enabled_sources["workshop"] and workshop_ids:
         is_failed = True
         while is_failed:
             is_failed = False
