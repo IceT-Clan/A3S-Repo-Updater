@@ -287,7 +287,6 @@ def link_mods(output, dirs, mod):
                   "repolocation",
                   ]:
         return
-
     displayname = mod[1]
     link_to(output, dirs["mods"], dirs["repo"], displayname)
     output.printstatus("success_linking", displayname)
