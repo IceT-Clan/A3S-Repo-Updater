@@ -278,8 +278,6 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
 
 def link_mods(output, dirs, mod):
     """link mod to repo"""
-    displayname = mod[1]
-
     if mod[0] in ["manual",
                   "manual_location",
                   "ace_optionals",
@@ -287,11 +285,10 @@ def link_mods(output, dirs, mod):
                   "steamcmd",
                   "modlocation",
                   "repolocation",
-                  # workaround for IndexOutOfRange when repo.cfg has a newline
-                  ""
                   ]:
         return
 
+    displayname = mod[1]
     link_to(output, dirs["mods"], dirs["repo"], displayname)
     output.printstatus("success_linking", displayname)
 
