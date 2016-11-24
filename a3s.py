@@ -169,7 +169,7 @@ def update(output, dirs, enabled_sources, mod, **kwargs):
             for mod_file in gglob(displayname + r"/@*"):
                 output.debug("copy " + mod_file + " --> " + dirs["mods"] +
                              "/" + displayname)
-                shutil.copy(mod_file, dirs["mods"] + "/" + displayname)
+                shutil.copytree(mod_file, dirs["mods"] + "/" + displayname)
 
         output.printstatus("success_update", displayname)
 
